@@ -3,7 +3,7 @@
   "name": "applause-reporter-common",
   "umd:name": "applause-reporter-common",
   "repository": "https://github.com/ApplauseOSS/applause-reporter-common",
-  "description": "TODO_MODULE_DESCRIPTION",
+  "description": "test result reporter shared API methods",
   "unpkg": "dist/index.min.js",
   "module": "dist/index.mjs",
   "main": "dist/index.js",
