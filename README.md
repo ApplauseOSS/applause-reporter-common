@@ -7,9 +7,9 @@ creates NPM package in /dist folder in ES, UMD, and CJS module formats
 
 also publishes Typescript types and sourcemaps into NPM package
 
-runs tests using Node and UVU
+runs tests using Node and Jest
 
-Configured for Node 14+ . To update, change base tsconfig from "extends": "@tsconfig/node12/tsconfig.json", update "engines" section in package.json, and update .node-version file
+Configured for Node 14+ . To update, change base tsconfig from "extends": "@tsconfig/node14/tsconfig.json", update "engines" section in package.json, and update .node-version file
 
 ## Setup
 
