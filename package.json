@@ -25,8 +25,11 @@
   "scripts": {
     "clean": "rm -rf ./dist/",
     "lint": "eslint ./src/ ./test/ --fix",
-    "build": "yarn install && yarn lint && yarn test && rollup -c",
-    "test": "yarn jest"
+    "lint-verify": "eslint ./src/ ./test/",
+    "build": "rollup -c",
+    "test": "yarn jest",
+    "publish-verify": "npm publish --dry-run",
+    "all": "yarn install && yarn lint && yarn build && yarn test && yarn publish-verify"
   },
   "keywords": [
     "Applause"

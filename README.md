@@ -11,9 +11,9 @@ runs tests using Node and Jest
 
 Configured for Node 14+ . To update, change base tsconfig from "extends": "@tsconfig/node14/tsconfig.json", update "engines" section in package.json, and update .node-version file
 
-## Setup
+## Run through local dev setup and build
 
-`yarn install`
+`yarn all`
 
 ### build
 
@@ -32,5 +32,6 @@ Configured for Node 14+ . To update, change base tsconfig from "extends": "@tsco
 `yarn lint`
 
 ## Publishing
+`yarn publish-verify`
 
-TODO
+CI will do actual pubish on merge
