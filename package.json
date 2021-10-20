@@ -29,6 +29,7 @@
     "build": "rollup -c",
     "test": "yarn jest",
     "publish-verify": "npm publish --dry-run",
+    "publish": "npm publish",
     "all": "yarn install && yarn lint && yarn build && yarn test && yarn publish-verify"
   },
   "keywords": [

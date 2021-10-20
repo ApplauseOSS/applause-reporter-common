@@ -114,8 +114,6 @@ out
 .yarn/install-state.gz
 .pnp.*
 
-# Compiled code
-dist/
 
 # rollup 
 .rollup.cache
