@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
-      - run: ./scripts/build.sh
+    - run: ./scripts/build.sh
 
 #==============================================================================
 # UNCOMMENT THIS SECTION ONCE WE HAVE PUBLISHING TO NPM.ORG
