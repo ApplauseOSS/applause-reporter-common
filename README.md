@@ -11,6 +11,9 @@ runs tests using Node and Jest
 
 Configured for Node 14+ . To update, change base tsconfig from "extends": "@tsconfig/node14/tsconfig.json", update "engines" section in package.json, and update .node-version file
 
+# Running 
+Use `yarn run all` . It will configure and run all the build steps
+
 ## Run through local dev setup and build
 
 `yarn all`
