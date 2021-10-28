@@ -48,3 +48,8 @@ export enum TestResultStatus {
   CANCELED = 'CANCELED',
   ERROR = 'ERROR',
 }
+
+export interface TestResultProviderInfo {
+  testResultId: number;
+  providerUrl: string;
+}
