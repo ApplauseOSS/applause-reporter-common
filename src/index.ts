@@ -98,12 +98,12 @@ export class AutoApi {
 
   async getProviderSessionLinks(
     resultIds: number[]
-  ): Promise<AxiosResponse<TestResultProviderInfo>> {
+  ): Promise<AxiosResponse<TestResultProviderInfo[]>> {
     this.callsInFlight += 1;
     try {
       // this filters out falsy values (null, undefined, 0)
       const validIds: number[] = resultIds.filter(id => id);
-      return await this.client.post<TestResultProviderInfo>(
+      return await this.client.post<TestResultProviderInfo[]>(
         '/api/v1.0/test-result/provider-info',
         validIds
       );

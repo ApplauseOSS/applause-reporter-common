@@ -65,7 +65,7 @@ declare class AutoApi {
     });
     startTestCase(testCaseName: string, providerSessionId?: string): Promise<AxiosResponse<CreateTestResultDto>>;
     submitTestResult(resultId: number, status: TestResultStatus, failureReason?: string): Promise<void>;
-    getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo>>;
+    getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo[]>>;
 }
 /**
  * Exposed for testing. Don't use this!
