@@ -79,6 +79,17 @@ class AutoApi {
             this.callsInFlight -= 1;
         }
     }
+    async getProviderSessionLinks(resultIds) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            const validIds = resultIds.filter(id => id);
+            return await this.client.post('/api/v1.0/test-result/provider-info', validIds);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
 }
 /**
  *

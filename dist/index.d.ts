@@ -41,6 +41,10 @@ declare enum TestResultStatus {
     CANCELED = "CANCELED",
     ERROR = "ERROR"
 }
+interface TestResultProviderInfo {
+    testResultId: number;
+    providerUrl: string;
+}
 
 declare type ClientConfig = {
     readonly baseUrl: string;
@@ -61,6 +65,7 @@ declare class AutoApi {
     });
     startTestCase(testCaseName: string, providerSessionId?: string): Promise<AxiosResponse<CreateTestResultDto>>;
     submitTestResult(resultId: number, status: TestResultStatus, failureReason?: string): Promise<void>;
+    getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo>>;
 }
 /**
  * Exposed for testing. Don't use this!
@@ -74,4 +79,4 @@ declare const _validateCtorParams: (options: {
     readonly groupingName?: string | undefined;
 }) => void;
 
-export { AutoApi, ClientConfig, CreateTestResultDto, TestResultParamDto, TestResultStatus, _validateCtorParams };
+export { AutoApi, ClientConfig, CreateTestResultDto, TestResultParamDto, TestResultProviderInfo, TestResultStatus, _validateCtorParams };

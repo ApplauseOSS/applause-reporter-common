@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {
   CreateTestResultDto,
   TestResultParamDto,
+  TestResultProviderInfo,
   TestResultStatus,
 } from './dto';
 import validator from 'validator';
@@ -90,6 +91,22 @@ export class AutoApi {
         failureReason: failureReason,
       };
       await this.client.post('/api/v1.0/test-result/submit-ps-result', dto);
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async getProviderSessionLinks(
+    resultIds: number[]
+  ): Promise<AxiosResponse<TestResultProviderInfo>> {
+    this.callsInFlight += 1;
+    try {
+      // this filters out falsy values (null, undefined, 0)
+      const validIds: number[] = resultIds.filter(id => id);
+      return await this.client.post<TestResultProviderInfo>(
+        '/api/v1.0/test-result/provider-info',
+        validIds
+      );
     } finally {
       this.callsInFlight -= 1;
     }
