@@ -146,6 +146,9 @@ export const _validateCtorParams = (
     if (
       !validator.isURL(params[0].clientConfig.baseUrl, {
         protocols: ['http', 'https'],
+        require_tld: false, // allow localhost
+        require_host: true,
+        require_protocol: true,
       })
     ) {
       throw new Error(

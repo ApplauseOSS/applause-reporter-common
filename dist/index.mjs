@@ -107,6 +107,9 @@ const _validateCtorParams = (...params) => {
         // Base URL sanity
         if (!validator.isURL(params[0].clientConfig.baseUrl, {
             protocols: ['http', 'https'],
+            require_tld: false,
+            require_host: true,
+            require_protocol: true,
         })) {
             throw new Error(`baseUrl is not valid HTTP/HTTPS URL, was: ${params[0].clientConfig.baseUrl}`);
         }
