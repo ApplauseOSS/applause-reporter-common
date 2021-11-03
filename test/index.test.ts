@@ -50,10 +50,23 @@ test('providing bogus baseUrl should throw an exception', () => {
   expect(test).toThrow('baseUrl is not valid HTTP/HTTPS URL, was:');
 });
 
+test('providing baseUrl with localhost should work', () => {
+  const test = () => {
+    _validateCtorParams({
+      clientConfig: {
+        baseUrl: 'http://localhost:8080',
+        apiKey: 'fakeApiKey',
+      },
+      productId: 1,
+    });
+  };
+  expect(test).not.toThrow();
+});
+
 test('providing empty apiKey should throw an exception', () => {
   const test = () => {
     _validateCtorParams({
-      clientConfig: { baseUrl: 'www.example.com', apiKey: '' },
+      clientConfig: { baseUrl: 'http://www.example.com', apiKey: '' },
       productId: 1,
     });
   };
