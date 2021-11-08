@@ -47,7 +47,8 @@ export class AutoApi {
 
   async startTestCase(
     testCaseName: string,
-    providerSessionId?: string
+    providerSessionId?: string,
+    itwTestCaseId?: number
   ): Promise<AxiosResponse<CreateTestResultDto>> {
     this.callsInFlight += 1;
     try {
@@ -64,6 +65,7 @@ export class AutoApi {
         {
           testCaseName: testCaseName,
           productId: this.options.productId,
+          itwTestCaseId,
           groupingName:
             this.options.groupingName === undefined
               ? null

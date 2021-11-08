@@ -44,7 +44,7 @@ class AutoApi {
     get getCallsInFlight() {
         return this.callsInFlight;
     }
-    async startTestCase(testCaseName, providerSessionId) {
+    async startTestCase(testCaseName, providerSessionId, itwTestCaseId) {
         this.callsInFlight += 1;
         try {
             if (this.options.groupingName !== undefined &&
@@ -54,6 +54,7 @@ class AutoApi {
             const res = await this.client.post('/api/v1.0/test-result/create-ps-result', {
                 testCaseName: testCaseName,
                 productId: this.options.productId,
+                itwTestCaseId,
                 groupingName: this.options.groupingName === undefined
                     ? null
                     : this.options.groupingName,
