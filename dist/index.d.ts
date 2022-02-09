@@ -44,6 +44,7 @@ declare enum TestResultStatus {
 interface TestResultProviderInfo {
     testResultId: number;
     providerUrl: string;
+    providerSessionId: string;
 }
 
 declare type ClientConfig = {
