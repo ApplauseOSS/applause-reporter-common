@@ -52,4 +52,5 @@ export enum TestResultStatus {
 export interface TestResultProviderInfo {
   testResultId: number;
   providerUrl: string;
+  providerSessionId: string;
 }
