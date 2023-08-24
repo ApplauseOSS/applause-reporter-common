@@ -1,6 +1,11 @@
 import axios from 'axios';
 import validator from 'validator';
 
+const API_VERSION = '1.0.0';
+
+/**
+ * Enum representing a test result's status
+ */
 var TestResultStatus;
 (function (TestResultStatus) {
     TestResultStatus["NOT_RUN"] = "NOT_RUN";
@@ -35,37 +40,53 @@ class AutoApi {
     get getCallsInFlight() {
         return this.callsInFlight;
     }
-    async startTestCase(testCaseName, providerSessionId, itwTestCaseId) {
+    async startTestRun(info) {
         this.callsInFlight += 1;
         try {
-            if (this.options.groupingName !== undefined &&
-                providerSessionId !== undefined) {
-                throw new Error(`Provider either groupingName in constructor or providerSessionId in each test start, not both!  Values provided: { providerSessionId: "${providerSessionId}\n ", groupingName: "${this.options.groupingName}" }`);
-            }
-            const res = await this.client.post('/api/v1.0/test-result/create-ps-result', {
-                testCaseName: testCaseName,
+            return await this.client.post('/api/v1.0/test-run/create', {
+                // Provided params
+                ...info,
+                // API Version
+                sdkVersion: `js:${API_VERSION}`,
+                // Copy over the product id
                 productId: this.options.productId,
-                itwTestCaseId,
-                groupingName: this.options.groupingName === undefined
-                    ? null
-                    : this.options.groupingName,
-                providerSessionId: providerSessionId === undefined ? null : providerSessionId,
+                // Copy over test rail parameters
+                testRailReportingEnabled: this.options.testRailOptions !== undefined,
+                addAllTestsToPlan: this.options.testRailOptions?.addAllTestsToPlan,
+                testRailProjectId: this.options.testRailOptions?.projectId,
+                testRailSuiteId: this.options.testRailOptions?.suiteId,
+                testRailPlanName: this.options.testRailOptions?.planName,
+                testRailRunName: this.options.testRailOptions?.runName,
+                overrideTestRailRunNameUniqueness: this.options.testRailOptions?.overrideTestRailRunUniqueness,
             });
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+    async endTestRun(testRunId) {
+        this.callsInFlight += 1;
+        try {
+            return await this.client.delete(`/api/v3.0/driver-session/${testRunId}?sessionStatus=COMPLETE`);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+    async startTestCase(params) {
+        this.callsInFlight += 1;
+        try {
+            const res = await this.client.post('/api/v1.0/test-result/create-result', params);
             return res;
         }
         finally {
             this.callsInFlight -= 1;
         }
     }
-    async submitTestResult(resultId, status, failureReason) {
+    async submitTestResult(params) {
         this.callsInFlight += 1;
         try {
-            const dto = {
-                testResultId: resultId,
-                status: status,
-                failureReason: failureReason,
-            };
-            await this.client.post('/api/v1.0/test-result/submit-ps-result', dto);
+            await this.client.post('/api/v1.0/test-result', params);
         }
         finally {
             this.callsInFlight -= 1;
@@ -77,6 +98,16 @@ class AutoApi {
             // this filters out falsy values (null, undefined, 0)
             const validIds = resultIds.filter(id => id);
             return await this.client.post('/api/v1.0/test-result/provider-info', validIds);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+    async sendSdkHeartbeat(testRunId) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.post(`/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`);
         }
         finally {
             this.callsInFlight -= 1;

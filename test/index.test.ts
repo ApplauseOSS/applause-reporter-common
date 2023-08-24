@@ -1,27 +1,10 @@
 import { AutoApi, _validateCtorParams } from '../src';
-
 test('should create the thing', () => {
   const autoApi = new AutoApi({
     clientConfig: { baseUrl: 'http://www.example.com', apiKey: 'apiKey' },
     productId: 1,
   });
   expect(autoApi).not.toBeUndefined();
-});
-
-test('providing groupingName + providerSessionId at same time should throw an exception', async () => {
-  const test = async () => {
-    const autoApi = new AutoApi({
-      clientConfig: {
-        request: 'fake pass type gaurd for AxiosInstance',
-      } as any,
-      productId: 1,
-      groupingName: 'groupingName',
-    });
-    await autoApi.startTestCase('testCaseName', 'providerSessionId');
-  };
-  await expect(test).rejects.toThrow(
-    'Provider either groupingName in constructor or providerSessionId in each test'
-  );
 });
 
 test('providing bogus productId should throw an exception', () => {
