@@ -97,7 +97,18 @@ declare class AutoApi {
     startTestCase(params: CreateTestResultDto): Promise<AxiosResponse<CreateTestResultResponseDto>>;
     submitTestResult(params: SubmitTestResultDto): Promise<void>;
     getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo[]>>;
-    sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<TestResultProviderInfo[]>>;
+    sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<void>>;
+}
+declare class TestRunHeartbeatService {
+    readonly testRunId: number;
+    readonly autoApi: AutoApi;
+    private enabled;
+    private nextHeartbeat?;
+    constructor(testRunId: number, autoApi: AutoApi);
+    start(): Promise<void>;
+    private scheduleNextHeartbeat;
+    private sendHeartbeat;
+    end(): Promise<void>;
 }
 /**
  * Exposed for testing. Don't use this!
@@ -111,4 +122,4 @@ declare const _validateCtorParams: (options: {
     readonly testRailOptions?: TestRailOptions | undefined;
 }) => void;
 
-export { AutoApi, ClientConfig, CreateTestResultDto, CreateTestResultResponseDto, SubmitTestResultDto, TestRailOptions, TestResultProviderInfo, TestResultStatus, TestRunCreateDto, TestRunCreateResponseDto, _validateCtorParams };
+export { AutoApi, ClientConfig, CreateTestResultDto, CreateTestResultResponseDto, SubmitTestResultDto, TestRailOptions, TestResultProviderInfo, TestResultStatus, TestRunCreateDto, TestRunCreateResponseDto, TestRunHeartbeatService, _validateCtorParams };

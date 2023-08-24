@@ -133,18 +133,56 @@ export class AutoApi {
     }
   }
 
-  async sendSdkHeartbeat(
-    testRunId: number
-  ): Promise<AxiosResponse<TestResultProviderInfo[]>> {
+  async sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<void>> {
     this.callsInFlight += 1;
     try {
       // this filters out falsy values (null, undefined, 0)
-      return await this.client.post<TestResultProviderInfo[]>(
+      return await this.client.post<void>(
         `/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`
       );
     } finally {
       this.callsInFlight -= 1;
     }
+  }
+}
+
+export class TestRunHeartbeatService {
+  private enabled = false;
+  private nextHeartbeat?: Promise<void>;
+
+  constructor(readonly testRunId: number, readonly autoApi: AutoApi) {}
+
+  async start(): Promise<void> {
+    // End the current heartbeat if it has started
+    await this.end();
+
+    // Set up va new interval
+    this.enabled = true;
+    this.scheduleNextHeartbeat();
+  }
+
+  private scheduleNextHeartbeat(): void {
+    if (!this.enabled) {
+      return;
+    }
+    this.nextHeartbeat = new Promise(resolve => setTimeout(resolve, 5000)).then(
+      async () => await this.sendHeartbeat()
+    );
+  }
+
+  private async sendHeartbeat(): Promise<void> {
+    await this.autoApi.sendSdkHeartbeat(this.testRunId);
+    this.scheduleNextHeartbeat();
+  }
+
+  async end(): Promise<void> {
+    if (this.nextHeartbeat !== undefined) {
+      this.enabled = false;
+      console.debug('Ending Applause SDK Heartbeat');
+      await this.nextHeartbeat;
+      console.debug('Applause SDK Heartbeat Ended Successfully');
+    }
+    this.nextHeartbeat = undefined;
   }
 }
 
