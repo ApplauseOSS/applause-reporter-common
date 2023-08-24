@@ -1,11 +1,15 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {
   CreateTestResultDto,
-  TestResultParamDto,
+  CreateTestResultResponseDto,
+  SubmitTestResultDto,
+  TestRailOptions,
   TestResultProviderInfo,
-  TestResultStatus,
+  TestRunCreateDto,
+  TestRunCreateResponseDto,
 } from './dto';
 import validator from 'validator';
+import { API_VERSION } from './version';
 
 export type ClientConfig = {
   readonly baseUrl: string;
@@ -24,10 +28,10 @@ export class AutoApi {
   }
 
   constructor(
-    private readonly options: {
+    readonly options: {
       readonly clientConfig: ClientConfig | AxiosInstance;
       readonly productId: number;
-      readonly groupingName?: string;
+      readonly testRailOptions?: TestRailOptions;
     }
   ) {
     this.callsInFlight = 0;
@@ -45,34 +49,58 @@ export class AutoApi {
         });
   }
 
-  async startTestCase(
-    testCaseName: string,
-    providerSessionId?: string,
-    itwTestCaseId?: number
-  ): Promise<AxiosResponse<CreateTestResultDto>> {
+  async startTestRun(
+    info: TestRunCreateDto
+  ): Promise<AxiosResponse<TestRunCreateResponseDto>> {
     this.callsInFlight += 1;
     try {
-      if (
-        this.options.groupingName !== undefined &&
-        providerSessionId !== undefined
-      ) {
-        throw new Error(
-          `Provider either groupingName in constructor or providerSessionId in each test start, not both!  Values provided: { providerSessionId: "${providerSessionId}\n ", groupingName: "${this.options.groupingName}" }`
-        );
-      }
-      const res = await this.client.post<CreateTestResultDto>(
-        '/api/v1.0/test-result/create-ps-result',
+      return await this.client.post<TestRunCreateResponseDto>(
+        '/api/v1.0/test-run/create',
         {
-          testCaseName: testCaseName,
+          // Provided params
+          ...info,
+
+          // API Version
+          sdkVersion: `js:${API_VERSION}`,
+
+          // Copy over the product id
           productId: this.options.productId,
-          itwTestCaseId,
-          groupingName:
-            this.options.groupingName === undefined
-              ? null
-              : this.options.groupingName,
-          providerSessionId:
-            providerSessionId === undefined ? null : providerSessionId,
+
+          // Copy over test rail parameters
+          testRailReportingEnabled: this.options.testRailOptions !== undefined,
+          addAllTestsToPlan: this.options.testRailOptions?.addAllTestsToPlan,
+          testRailProjectId: this.options.testRailOptions?.projectId,
+          testRailSuiteId: this.options.testRailOptions?.suiteId,
+          testRailPlanName: this.options.testRailOptions?.planName,
+          testRailRunName: this.options.testRailOptions?.runName,
+          overrideTestRailRunNameUniqueness:
+            this.options.testRailOptions?.overrideTestRailRunUniqueness,
         }
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async endTestRun(testRunId: number): Promise<AxiosResponse<void>> {
+    this.callsInFlight += 1;
+    try {
+      return await this.client.delete<void>(
+        `/api/v3.0/driver-session/${testRunId}?sessionStatus=COMPLETE`
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async startTestCase(
+    params: CreateTestResultDto
+  ): Promise<AxiosResponse<CreateTestResultResponseDto>> {
+    this.callsInFlight += 1;
+    try {
+      const res = await this.client.post<CreateTestResultResponseDto>(
+        '/api/v1.0/test-result/create-result',
+        params
       );
       return res;
     } finally {
@@ -80,19 +108,10 @@ export class AutoApi {
     }
   }
 
-  async submitTestResult(
-    resultId: number,
-    status: TestResultStatus,
-    failureReason?: string
-  ): Promise<void> {
+  async submitTestResult(params: SubmitTestResultDto): Promise<void> {
     this.callsInFlight += 1;
     try {
-      const dto: TestResultParamDto = {
-        testResultId: resultId,
-        status: status,
-        failureReason: failureReason,
-      };
-      await this.client.post('/api/v1.0/test-result/submit-ps-result', dto);
+      await this.client.post('/api/v1.0/test-result', params);
     } finally {
       this.callsInFlight -= 1;
     }
@@ -108,6 +127,20 @@ export class AutoApi {
       return await this.client.post<TestResultProviderInfo[]>(
         '/api/v1.0/test-result/provider-info',
         validIds
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async sendSdkHeartbeat(
+    testRunId: number
+  ): Promise<AxiosResponse<TestResultProviderInfo[]>> {
+    this.callsInFlight += 1;
+    try {
+      // this filters out falsy values (null, undefined, 0)
+      return await this.client.post<TestResultProviderInfo[]>(
+        `/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`
       );
     } finally {
       this.callsInFlight -= 1;

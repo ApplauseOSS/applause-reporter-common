@@ -1,44 +1,72 @@
-export interface CreateTestResultDto {
-  /** id of test result we're currently processing * */
-  testResultId: number;
-  testRailTestCaseId: string;
-  applauseTestCaseId: number;
+/**
+ * DTO used to create a new Applause test run
+ */
+export interface TestRunCreateDto {
+  // Required: a list of test cases to pre-create
+  tests: string[];
+
+  // Optional: an applause test cycle id
+  itwTestCycleId?: number;
 }
 
-export interface TestResultParamDto {
-  /**  This is NOT the test session ID
-    This field has been overloaded to have two meanings depending on which part
-    of auto-api processing you are doing.
-       - Sometimes it is the TestRail identifier for the test case
-         When the data is first passed from the SDK to auto-api in the
-         see TestResultController#createTestResult
-       - Other times it s the DB row ID for the TestResult hibernate object
-         see TestResultController#submitTestResult
-    For this reason, this field is deprecated.  We still use it for legacy instances
-    of the SDK, but it's going away, replaced by new fields **/
-  testResultId?: number;
+/**
+ * DTO modeling the response to a test run creation request
+ */
+export interface TestRunCreateResponseDto {
+  // The ID of the Applause Test Run
+  runId: number;
+}
 
-  /** Id in auto-api DB **/
-  dbRowId?: number;
+/**
+ * DTO used to mark the start of a test result
+ */
+export interface CreateTestResultDto {
+  // ID of the test run to submit this result to
+  testRunId: number;
 
-  /** The TestRail test identifier as defined by the user of the SDK.  Sent from the SDK to auto-api */
+  // Name of the Test Case
+  testCaseName: string;
+
+  // A collection of provider session guids
+  providerSessionIds: string[];
+
+  // Optional: TestRail Test Case Id
+  testCaseId?: string;
+
+  // Optional: Applause Test Case Id
+  itwTestCaseId?: string;
+}
+
+/**
+ * DTO response to a test result creation request
+ */
+export interface CreateTestResultResponseDto {
+  testResultId: number;
+}
+
+/**
+ * DTO used to submit a status to an in progress test result.
+ */
+export interface SubmitTestResultDto {
+  // The id of the test result
+  testResultId: number;
+
+  // An optional testrail test case id
   testRailCaseId?: number;
 
-  /** The ITW test identifier as defined by the user of the SDK.  Sent from the SDK to auto-api*/
+  // An optional applause test case id
   itwCaseId?: number;
 
-  driverConfigId?: number;
-
-  /** The driver group (serverside only) being used by test results */
-  driverGroupId?: number;
-
-  /** The ending status of the test. */
+  // The ending status of the test.
   status: TestResultStatus;
 
-  /** Optional reason why the test failed. */
+  // An optional reason why the test failed.
   failureReason?: string;
 }
 
+/**
+ * Enum representing a test result's status
+ */
 export enum TestResultStatus {
   NOT_RUN = 'NOT_RUN',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -49,8 +77,23 @@ export enum TestResultStatus {
   ERROR = 'ERROR',
 }
 
+/**
+ * DTO representing test result info that is provided at the end of a test run
+ */
 export interface TestResultProviderInfo {
   testResultId: number;
   providerUrl: string;
   providerSessionId: string;
+}
+
+/**
+ * DTO representing TestRail settings. The presence of this info signals that test rail reporting is enabled
+ */
+export interface TestRailOptions {
+  projectId: number;
+  suiteId: number;
+  planName: string;
+  runName: string;
+  addAllTestsToPlan?: boolean;
+  overrideTestRailRunUniqueness?: boolean;
 }

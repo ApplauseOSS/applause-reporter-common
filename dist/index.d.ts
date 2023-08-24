@@ -1,37 +1,47 @@
 import { AxiosInstance, AxiosResponse } from 'axios';
 
-interface CreateTestResultDto {
-    /** id of test result we're currently processing * */
-    testResultId: number;
-    testRailTestCaseId: string;
-    applauseTestCaseId: number;
+/**
+ * DTO used to create a new Applause test run
+ */
+interface TestRunCreateDto {
+    tests: string[];
+    itwTestCycleId?: number;
 }
-interface TestResultParamDto {
-    /**  This is NOT the test session ID
-      This field has been overloaded to have two meanings depending on which part
-      of auto-api processing you are doing.
-         - Sometimes it is the TestRail identifier for the test case
-           When the data is first passed from the SDK to auto-api in the
-           see TestResultController#createTestResult
-         - Other times it s the DB row ID for the TestResult hibernate object
-           see TestResultController#submitTestResult
-      For this reason, this field is deprecated.  We still use it for legacy instances
-      of the SDK, but it's going away, replaced by new fields **/
-    testResultId?: number;
-    /** Id in auto-api DB **/
-    dbRowId?: number;
-    /** The TestRail test identifier as defined by the user of the SDK.  Sent from the SDK to auto-api */
+/**
+ * DTO modeling the response to a test run creation request
+ */
+interface TestRunCreateResponseDto {
+    runId: number;
+}
+/**
+ * DTO used to mark the start of a test result
+ */
+interface CreateTestResultDto {
+    testRunId: number;
+    testCaseName: string;
+    providerSessionIds: string[];
+    testCaseId?: string;
+    itwTestCaseId?: string;
+}
+/**
+ * DTO response to a test result creation request
+ */
+interface CreateTestResultResponseDto {
+    testResultId: number;
+}
+/**
+ * DTO used to submit a status to an in progress test result.
+ */
+interface SubmitTestResultDto {
+    testResultId: number;
     testRailCaseId?: number;
-    /** The ITW test identifier as defined by the user of the SDK.  Sent from the SDK to auto-api*/
     itwCaseId?: number;
-    driverConfigId?: number;
-    /** The driver group (serverside only) being used by test results */
-    driverGroupId?: number;
-    /** The ending status of the test. */
     status: TestResultStatus;
-    /** Optional reason why the test failed. */
     failureReason?: string;
 }
+/**
+ * Enum representing a test result's status
+ */
 declare enum TestResultStatus {
     NOT_RUN = "NOT_RUN",
     IN_PROGRESS = "IN_PROGRESS",
@@ -41,10 +51,24 @@ declare enum TestResultStatus {
     CANCELED = "CANCELED",
     ERROR = "ERROR"
 }
+/**
+ * DTO representing test result info that is provided at the end of a test run
+ */
 interface TestResultProviderInfo {
     testResultId: number;
     providerUrl: string;
     providerSessionId: string;
+}
+/**
+ * DTO representing TestRail settings. The presence of this info signals that test rail reporting is enabled
+ */
+interface TestRailOptions {
+    projectId: number;
+    suiteId: number;
+    planName: string;
+    runName: string;
+    addAllTestsToPlan?: boolean;
+    overrideTestRailRunUniqueness?: boolean;
 }
 
 declare type ClientConfig = {
@@ -52,7 +76,11 @@ declare type ClientConfig = {
     readonly apiKey: string;
 };
 declare class AutoApi {
-    private readonly options;
+    readonly options: {
+        readonly clientConfig: ClientConfig | AxiosInstance;
+        readonly productId: number;
+        readonly testRailOptions?: TestRailOptions;
+    };
     private readonly client;
     private callsInFlight;
     /**
@@ -62,11 +90,14 @@ declare class AutoApi {
     constructor(options: {
         readonly clientConfig: ClientConfig | AxiosInstance;
         readonly productId: number;
-        readonly groupingName?: string;
+        readonly testRailOptions?: TestRailOptions;
     });
-    startTestCase(testCaseName: string, providerSessionId?: string, itwTestCaseId?: number): Promise<AxiosResponse<CreateTestResultDto>>;
-    submitTestResult(resultId: number, status: TestResultStatus, failureReason?: string): Promise<void>;
+    startTestRun(info: TestRunCreateDto): Promise<AxiosResponse<TestRunCreateResponseDto>>;
+    endTestRun(testRunId: number): Promise<AxiosResponse<void>>;
+    startTestCase(params: CreateTestResultDto): Promise<AxiosResponse<CreateTestResultResponseDto>>;
+    submitTestResult(params: SubmitTestResultDto): Promise<void>;
     getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo[]>>;
+    sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<TestResultProviderInfo[]>>;
 }
 /**
  * Exposed for testing. Don't use this!
@@ -77,7 +108,7 @@ declare class AutoApi {
 declare const _validateCtorParams: (options: {
     readonly clientConfig: ClientConfig | AxiosInstance;
     readonly productId: number;
-    readonly groupingName?: string | undefined;
+    readonly testRailOptions?: TestRailOptions | undefined;
 }) => void;
 
-export { AutoApi, ClientConfig, CreateTestResultDto, TestResultParamDto, TestResultProviderInfo, TestResultStatus, _validateCtorParams };
+export { AutoApi, ClientConfig, CreateTestResultDto, CreateTestResultResponseDto, SubmitTestResultDto, TestRailOptions, TestResultProviderInfo, TestResultStatus, TestRunCreateDto, TestRunCreateResponseDto, _validateCtorParams };
