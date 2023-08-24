@@ -114,6 +114,39 @@ class AutoApi {
         }
     }
 }
+class TestRunHeartbeatService {
+    constructor(testRunId, autoApi) {
+        this.testRunId = testRunId;
+        this.autoApi = autoApi;
+        this.enabled = false;
+    }
+    async start() {
+        // End the current heartbeat if it has started
+        await this.end();
+        // Set up va new interval
+        this.enabled = true;
+        this.scheduleNextHeartbeat();
+    }
+    scheduleNextHeartbeat() {
+        if (!this.enabled) {
+            return;
+        }
+        this.nextHeartbeat = new Promise(resolve => setTimeout(resolve, 5000)).then(async () => await this.sendHeartbeat());
+    }
+    async sendHeartbeat() {
+        await this.autoApi.sendSdkHeartbeat(this.testRunId);
+        this.scheduleNextHeartbeat();
+    }
+    async end() {
+        if (this.nextHeartbeat !== undefined) {
+            this.enabled = false;
+            console.debug('Ending Applause SDK Heartbeat');
+            await this.nextHeartbeat;
+            console.debug('Applause SDK Heartbeat Ended Successfully');
+        }
+        this.nextHeartbeat = undefined;
+    }
+}
 /**
  *
  * @param clientConfig user defined type check to see if we were passed an already built AxoisIntance or regular ClientConfig
@@ -152,5 +185,5 @@ const _validateCtorParams = (...params) => {
     }
 };
 
-export { AutoApi, TestResultStatus, _validateCtorParams };
+export { AutoApi, TestResultStatus, TestRunHeartbeatService, _validateCtorParams };
 //# sourceMappingURL=index.mjs.map
