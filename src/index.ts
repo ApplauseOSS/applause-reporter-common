@@ -10,6 +10,7 @@ import {
 } from './dto';
 import validator from 'validator';
 import { API_VERSION } from './version';
+import { DriverSessionMap } from './drivers';
 
 export type ClientConfig = {
   readonly baseUrl: string;
@@ -237,3 +238,4 @@ export const _validateCtorParams = (
 
 // Re-export DTOs
 export * from './dto';
+export const DriverRegistration = new DriverSessionMap();

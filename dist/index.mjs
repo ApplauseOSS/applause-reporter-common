@@ -3,6 +3,25 @@ import validator from 'validator';
 
 const API_VERSION = '1.0.0';
 
+class DriverSessionMap {
+    constructor() {
+        this.registrationMap = new Map();
+    }
+    registerDriver(key, providerSessionGuid) {
+        this.registrationMap.set(key, [
+            ...(this.registrationMap.get(key) || []),
+            providerSessionGuid,
+        ]);
+    }
+    getDrivers(key) {
+        console.log('Getitng drivers');
+        return this.registrationMap.get(key) || [];
+    }
+    getKeys() {
+        return Array.from(this.registrationMap.keys());
+    }
+}
+
 /**
  * Enum representing a test result's status
  */
@@ -184,6 +203,7 @@ const _validateCtorParams = (...params) => {
         }
     }
 };
+const DriverRegistration = new DriverSessionMap();
 
-export { AutoApi, TestResultStatus, TestRunHeartbeatService, _validateCtorParams };
+export { AutoApi, DriverRegistration, TestResultStatus, TestRunHeartbeatService, _validateCtorParams };
 //# sourceMappingURL=index.mjs.map

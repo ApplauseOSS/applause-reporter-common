@@ -62,6 +62,8 @@ export interface SubmitTestResultDto {
 
   // An optional reason why the test failed.
   failureReason?: string;
+
+  providerSessionGuids?: string[];
 }
 
 /**

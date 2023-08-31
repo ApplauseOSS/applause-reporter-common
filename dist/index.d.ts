@@ -38,6 +38,7 @@ interface SubmitTestResultDto {
     itwCaseId?: number;
     status: TestResultStatus;
     failureReason?: string;
+    providerSessionGuids?: string[];
 }
 /**
  * Enum representing a test result's status
@@ -69,6 +70,13 @@ interface TestRailOptions {
     runName: string;
     addAllTestsToPlan?: boolean;
     overrideTestRailRunUniqueness?: boolean;
+}
+
+declare class DriverSessionMap {
+    private readonly registrationMap;
+    registerDriver(key: string, providerSessionGuid: string): void;
+    getDrivers(key: string): string[];
+    getKeys(): string[];
 }
 
 declare type ClientConfig = {
@@ -122,4 +130,6 @@ declare const _validateCtorParams: (options: {
     readonly testRailOptions?: TestRailOptions | undefined;
 }) => void;
 
-export { AutoApi, ClientConfig, CreateTestResultDto, CreateTestResultResponseDto, SubmitTestResultDto, TestRailOptions, TestResultProviderInfo, TestResultStatus, TestRunCreateDto, TestRunCreateResponseDto, TestRunHeartbeatService, _validateCtorParams };
+declare const DriverRegistration: DriverSessionMap;
+
+export { AutoApi, ClientConfig, CreateTestResultDto, CreateTestResultResponseDto, DriverRegistration, SubmitTestResultDto, TestRailOptions, TestResultProviderInfo, TestResultStatus, TestRunCreateDto, TestRunCreateResponseDto, TestRunHeartbeatService, _validateCtorParams };
