@@ -27,18 +27,9 @@ export interface TestRunCreateResponseDto {
   runId: number;
 }
 
-/**
- * DTO used to mark the start of a test result
- */
-export interface CreateTestResultDto {
-  // ID of the test run to submit this result to
-  testRunId: number;
-
-  // Name of the Test Case
-  testCaseName: string;
-
+export interface AdditionalTestCaseParams {
   // A collection of provider session guids
-  providerSessionIds: string[];
+  providerSessionIds?: string[];
 
   // Optional: TestRail Test Case Id
   testCaseId?: string;
@@ -48,18 +39,26 @@ export interface CreateTestResultDto {
 }
 
 /**
- * DTO response to a test result creation request
+ * DTO used to mark the start of a test result
  */
-export interface CreateTestResultResponseDto {
-  testResultId: number;
+export interface CreateTestCaseResultDto extends AdditionalTestCaseParams {
+  // ID of the test run to submit this result to
+  testRunId: number;
+
+  // Name of the Test Case
+  testCaseName: string;
 }
 
 /**
- * DTO used to submit a status to an in progress test result.
+ * DTO response to a test result creation request
  */
-export interface SubmitTestResultDto {
-  // The id of the test result
+export interface CreateTestCaseResultResponseDto {
   testResultId: number;
+}
+
+export interface AdditionalTestCaseResultParams {
+  // A list of selenium provider session ids to connect to the result
+  providerSessionGuids?: string[];
 
   // An optional testrail test case id
   testRailCaseId?: number;
@@ -67,11 +66,20 @@ export interface SubmitTestResultDto {
   // An optional applause test case id
   itwCaseId?: number;
 
+  // The reason a test case failed
+  failureReason?: string;
+}
+
+/**
+ * DTO used to submit a status to an in progress test result.
+ */
+export interface SubmitTestCaseResultDto
+  extends AdditionalTestCaseResultParams {
+  // The id of the test result
+  testResultId: number;
+
   // The ending status of the test.
   status: TestResultStatus;
-
-  // An optional reason why the test failed.
-  failureReason?: string;
 }
 
 /**

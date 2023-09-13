@@ -1,6 +1,11 @@
 import { writeFileSync } from 'fs';
 import { AutoApi } from './auto-api.ts';
-import { ApplauseConfig, TestResultStatus } from './dto.ts';
+import {
+  AdditionalTestCaseParams,
+  AdditionalTestCaseResultParams,
+  ApplauseConfig,
+  TestResultStatus,
+} from './dto.ts';
 import { TestRunHeartbeatService } from './heartbeat.ts';
 import { join as pathJoin } from 'path';
 
@@ -18,21 +23,25 @@ export class ApplauseReporter {
     this.reporter = this.initializer.initializeRun(tests);
   }
 
-  public startTestCase(id: string, testCaseName: string): void {
+  public startTestCase(
+    id: string,
+    testCaseName: string,
+    params?: AdditionalTestCaseParams
+  ): void {
     if (this.reporter === undefined) {
       throw new Error(
         'Cannot start a test case for a run that was never initialized'
       );
     }
     void this.reporter.then(reporter =>
-      reporter.startTestCase(id, testCaseName)
+      reporter.startTestCase(id, testCaseName, params)
     );
   }
 
   public submitTestCaseResult(
     id: string,
     status: TestResultStatus,
-    errorMessage?: string
+    params?: AdditionalTestCaseResultParams
   ): void {
     if (this.reporter === undefined) {
       throw new Error(
@@ -40,7 +49,7 @@ export class ApplauseReporter {
       );
     }
     void this.reporter.then(reporter =>
-      reporter.submitTestCaseResult(id, status, errorMessage)
+      reporter.submitTestCaseResult(id, status, params)
     );
   }
 
@@ -86,14 +95,21 @@ class RunReporter {
     private heartbeatService: TestRunHeartbeatService
   ) {}
 
-  public startTestCase(id: string, testCaseName: string): void {
+  public startTestCase(
+    id: string,
+    testCaseName: string,
+    params?: AdditionalTestCaseParams
+  ): void {
     const parsedTestCase = this.parseTestCaseName(testCaseName);
     this.uidToResultIdMap[id] = this.autoApi
       .startTestCase({
         testCaseName: parsedTestCase.testCaseName,
         testCaseId: parsedTestCase.testRailTestCaseId,
+        itwTestCaseId: parsedTestCase.applauseTestCaseId,
+
         testRunId: this.testRunId,
-        providerSessionIds: [],
+        // If the additional params provides either test case id, it will override the parsed value we set above
+        ...params,
       })
       .then(res => {
         return res.data.testResultId;
@@ -103,13 +119,13 @@ class RunReporter {
   public submitTestCaseResult(
     id: string,
     status: TestResultStatus,
-    errorMessage?: string
+    params?: AdditionalTestCaseResultParams
   ): void {
     this.resultSubmissionMap[id] = this.uidToResultIdMap[id]?.then(resultId =>
       this.autoApi.submitTestCaseResult({
         status: status,
         testResultId: resultId,
-        failureReason: errorMessage,
+        ...params,
       })
     );
   }

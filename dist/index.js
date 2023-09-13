@@ -213,17 +213,17 @@ class ApplauseReporter {
     runnerStart(tests) {
         this.reporter = this.initializer.initializeRun(tests);
     }
-    startTestCase(id, testCaseName) {
+    startTestCase(id, testCaseName, params) {
         if (this.reporter === undefined) {
             throw new Error('Cannot start a test case for a run that was never initialized');
         }
-        void this.reporter.then(reporter => reporter.startTestCase(id, testCaseName));
+        void this.reporter.then(reporter => reporter.startTestCase(id, testCaseName, params));
     }
-    submitTestCaseResult(id, status, errorMessage) {
+    submitTestCaseResult(id, status, params) {
         if (this.reporter === undefined) {
             throw new Error('Cannot submit test case result for a run that was never initialized');
         }
-        void this.reporter.then(reporter => reporter.submitTestCaseResult(id, status, errorMessage));
+        void this.reporter.then(reporter => reporter.submitTestCaseResult(id, status, params));
     }
     async runnerEnd() {
         if (this.reporter === undefined) {
@@ -265,24 +265,26 @@ class RunReporter {
         this.testRunId = testRunId;
         this.heartbeatService = heartbeatService;
     }
-    startTestCase(id, testCaseName) {
+    startTestCase(id, testCaseName, params) {
         const parsedTestCase = this.parseTestCaseName(testCaseName);
         this.uidToResultIdMap[id] = this.autoApi
             .startTestCase({
             testCaseName: parsedTestCase.testCaseName,
             testCaseId: parsedTestCase.testRailTestCaseId,
+            itwTestCaseId: parsedTestCase.applauseTestCaseId,
             testRunId: this.testRunId,
-            providerSessionIds: [],
+            // If the additional params provides either test case id, it will override the parsed value we set above
+            ...params,
         })
             .then(res => {
             return res.data.testResultId;
         });
     }
-    submitTestCaseResult(id, status, errorMessage) {
+    submitTestCaseResult(id, status, params) {
         this.resultSubmissionMap[id] = this.uidToResultIdMap[id]?.then(resultId => this.autoApi.submitTestCaseResult({
             status: status,
             testResultId: resultId,
-            failureReason: errorMessage,
+            ...params,
         }));
     }
     parseTestCaseName(testCaseName) {

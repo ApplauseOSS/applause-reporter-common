@@ -2,9 +2,9 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {
   ApplauseConfig,
   ClientConfig,
-  CreateTestResultDto,
-  CreateTestResultResponseDto,
-  SubmitTestResultDto,
+  CreateTestCaseResultDto,
+  CreateTestCaseResultResponseDto,
+  SubmitTestCaseResultDto,
   TestResultProviderInfo,
   TestRunCreateDto,
   TestRunCreateResponseDto,
@@ -85,11 +85,11 @@ export class AutoApi {
   }
 
   async startTestCase(
-    params: CreateTestResultDto
-  ): Promise<AxiosResponse<CreateTestResultResponseDto>> {
+    params: CreateTestCaseResultDto
+  ): Promise<AxiosResponse<CreateTestCaseResultResponseDto>> {
     this.callsInFlight += 1;
     try {
-      const res = await this.client.post<CreateTestResultResponseDto>(
+      const res = await this.client.post<CreateTestCaseResultResponseDto>(
         '/api/v1.0/test-result/create-result',
         params
       );
@@ -99,7 +99,7 @@ export class AutoApi {
     }
   }
 
-  async submitTestCaseResult(params: SubmitTestResultDto): Promise<void> {
+  async submitTestCaseResult(params: SubmitTestCaseResultDto): Promise<void> {
     this.callsInFlight += 1;
     try {
       await this.client.post('/api/v1.0/test-result', params);
