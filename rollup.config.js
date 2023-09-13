@@ -1,7 +1,8 @@
 import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
-import pkg from './package.json' assert { type: 'json' };;
+import pkg from './package.json' assert { type: 'json' };
+import dts from 'rollup-plugin-dts';
 
 /** @type {import('rollup').RollupOptions} */
 const options = [
@@ -30,8 +31,16 @@ const options = [
 		],
 		plugins: [
 			resolve(),
-			typescript()
+			// The dts plugin will handle exporting all types in a single dts file, so we do not need to export the declarations in this case
+			typescript({
+				declaration: false,
+			})
 		]
-	}
+	},
+	{
+		input: "src/index.ts",
+		output: [{ file: "dist/index.d.ts", format: "es" }],
+		plugins: [dts.default()],
+	  },
 ]
 export default options;
