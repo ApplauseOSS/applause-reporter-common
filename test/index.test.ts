@@ -1,5 +1,7 @@
-import { AutoApi, _validateCtorParams } from '../src/auto-api.ts';
-
+import {
+  AutoApi,
+  _validateCtorParams,
+} from '../src';
 jest.setTimeout(400_000);
 test('should create the thing', () => {
   const autoApi = new AutoApi({

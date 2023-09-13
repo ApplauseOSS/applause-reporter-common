@@ -1,21 +1,23 @@
 import axios from 'axios';
-import Validator from 'validator';
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import validator from 'validator';
 
 const API_VERSION = '1.0.0';
 
-const validator = Validator.default;
+/**
+ * Enum representing a test result's status
+ */
+var TestResultStatus;
+(function (TestResultStatus) {
+    TestResultStatus["NOT_RUN"] = "NOT_RUN";
+    TestResultStatus["IN_PROGRESS"] = "IN_PROGRESS";
+    TestResultStatus["PASSED"] = "PASSED";
+    TestResultStatus["FAILED"] = "FAILED";
+    TestResultStatus["SKIPPED"] = "SKIPPED";
+    TestResultStatus["CANCELED"] = "CANCELED";
+    TestResultStatus["ERROR"] = "ERROR";
+})(TestResultStatus || (TestResultStatus = {}));
+
 class AutoApi {
-    options;
-    client;
-    callsInFlight;
-    /**
-     * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
-     */
-    get getCallsInFlight() {
-        return this.callsInFlight;
-    }
     constructor(options) {
         this.options = options;
         this.callsInFlight = 0;
@@ -31,6 +33,12 @@ class AutoApi {
                 },
                 responseType: 'json',
             });
+    }
+    /**
+     * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
+     */
+    get getCallsInFlight() {
+        return this.callsInFlight;
     }
     async startTestRun(info) {
         this.callsInFlight += 1;
@@ -75,7 +83,7 @@ class AutoApi {
             this.callsInFlight -= 1;
         }
     }
-    async submitTestCaseResult(params) {
+    async submitTestResult(params) {
         this.callsInFlight += 1;
         try {
             await this.client.post('/api/v1.0/test-result', params);
@@ -104,6 +112,39 @@ class AutoApi {
         finally {
             this.callsInFlight -= 1;
         }
+    }
+}
+class TestRunHeartbeatService {
+    constructor(testRunId, autoApi) {
+        this.testRunId = testRunId;
+        this.autoApi = autoApi;
+        this.enabled = false;
+    }
+    async start() {
+        // End the current heartbeat if it has started
+        await this.end();
+        // Set up va new interval
+        this.enabled = true;
+        this.scheduleNextHeartbeat();
+    }
+    scheduleNextHeartbeat() {
+        if (!this.enabled) {
+            return;
+        }
+        this.nextHeartbeat = new Promise(resolve => setTimeout(resolve, 5000)).then(async () => await this.sendHeartbeat());
+    }
+    async sendHeartbeat() {
+        await this.autoApi.sendSdkHeartbeat(this.testRunId);
+        this.scheduleNextHeartbeat();
+    }
+    async end() {
+        if (this.nextHeartbeat !== undefined) {
+            this.enabled = false;
+            console.debug('Ending Applause SDK Heartbeat');
+            await this.nextHeartbeat;
+            console.debug('Applause SDK Heartbeat Ended Successfully');
+        }
+        this.nextHeartbeat = undefined;
     }
 }
 /**
@@ -144,194 +185,5 @@ const _validateCtorParams = (...params) => {
     }
 };
 
-/**
- * Enum representing a test result's status
- */
-var TestResultStatus;
-(function (TestResultStatus) {
-    TestResultStatus["NOT_RUN"] = "NOT_RUN";
-    TestResultStatus["IN_PROGRESS"] = "IN_PROGRESS";
-    TestResultStatus["PASSED"] = "PASSED";
-    TestResultStatus["FAILED"] = "FAILED";
-    TestResultStatus["SKIPPED"] = "SKIPPED";
-    TestResultStatus["CANCELED"] = "CANCELED";
-    TestResultStatus["ERROR"] = "ERROR";
-})(TestResultStatus || (TestResultStatus = {}));
-
-class TestRunHeartbeatService {
-    testRunId;
-    autoApi;
-    enabled = false;
-    nextHeartbeat;
-    constructor(testRunId, autoApi) {
-        this.testRunId = testRunId;
-        this.autoApi = autoApi;
-    }
-    async start() {
-        // End the current heartbeat if it has started
-        await this.end();
-        // Set up va new interval
-        this.enabled = true;
-        this.scheduleNextHeartbeat();
-    }
-    isEnabled() {
-        return this.enabled;
-    }
-    scheduleNextHeartbeat() {
-        if (!this.enabled) {
-            return;
-        }
-        this.nextHeartbeat = new Promise(resolve => setTimeout(resolve, 5000)).then(() => this.sendHeartbeat());
-    }
-    async sendHeartbeat() {
-        console.log('Sending heartbeat');
-        await this.autoApi.sendSdkHeartbeat(this.testRunId);
-        console.log('Heartbeat sent');
-        this.scheduleNextHeartbeat();
-    }
-    async end() {
-        if (this.nextHeartbeat !== undefined) {
-            this.enabled = false;
-            console.debug('Ending Applause SDK Heartbeat');
-            await this.nextHeartbeat;
-            console.debug('Applause SDK Heartbeat Ended Successfully');
-        }
-        this.nextHeartbeat = undefined;
-    }
-}
-
-class ApplauseReporter {
-    autoApi;
-    initializer;
-    reporter;
-    constructor(config) {
-        this.autoApi = new AutoApi(config);
-        this.initializer = new RunInitializer(this.autoApi);
-    }
-    runnerStart(tests) {
-        this.reporter = this.initializer.initializeRun(tests);
-    }
-    startTestCase(id, testCaseName) {
-        if (this.reporter === undefined) {
-            throw new Error('Cannot start a test case for a run that was never initialized');
-        }
-        void this.reporter.then(reporter => reporter.startTestCase(id, testCaseName));
-    }
-    submitTestCaseResult(id, status, errorMessage) {
-        if (this.reporter === undefined) {
-            throw new Error('Cannot submit test case result for a run that was never initialized');
-        }
-        void this.reporter.then(reporter => reporter.submitTestCaseResult(id, status, errorMessage));
-    }
-    async runnerEnd() {
-        if (this.reporter === undefined) {
-            throw new Error('Cannot end a run that was never initialized');
-        }
-        await this.reporter.then(reporter => reporter.runnerEnd());
-    }
-}
-class RunInitializer {
-    autoApi;
-    constructor(autoApi) {
-        this.autoApi = autoApi;
-    }
-    async initializeRun(tests) {
-        const testRunCreateResponse = await this.autoApi.startTestRun({
-            tests: tests || [],
-        });
-        if (testRunCreateResponse.status < 200 ||
-            testRunCreateResponse.status > 300) {
-            throw new Error('Unable to create test run');
-        }
-        const runId = testRunCreateResponse.data.runId;
-        console.log('Test Run %d initialized', runId);
-        const heartbeatService = new TestRunHeartbeatService(runId, this.autoApi);
-        await heartbeatService.start();
-        return new RunReporter(this.autoApi, runId, heartbeatService);
-    }
-}
-class RunReporter {
-    autoApi;
-    testRunId;
-    heartbeatService;
-    TEST_RAIL_CASE_ID_PREFIX = 'TestRail-';
-    APPLAUSE_CASE_ID_PREFIX = 'Applause-';
-    uidToResultIdMap = {};
-    resultSubmissionMap = {};
-    constructor(autoApi, testRunId, heartbeatService) {
-        this.autoApi = autoApi;
-        this.testRunId = testRunId;
-        this.heartbeatService = heartbeatService;
-    }
-    startTestCase(id, testCaseName) {
-        const parsedTestCase = this.parseTestCaseName(testCaseName);
-        this.uidToResultIdMap[id] = this.autoApi
-            .startTestCase({
-            testCaseName: parsedTestCase.testCaseName,
-            testCaseId: parsedTestCase.testRailTestCaseId,
-            testRunId: this.testRunId,
-            providerSessionIds: [],
-        })
-            .then(res => {
-            return res.data.testResultId;
-        });
-    }
-    submitTestCaseResult(id, status, errorMessage) {
-        this.resultSubmissionMap[id] = this.uidToResultIdMap[id]?.then(resultId => this.autoApi.submitTestCaseResult({
-            status: status,
-            testResultId: resultId,
-            failureReason: errorMessage,
-        }));
-    }
-    parseTestCaseName(testCaseName) {
-        // Split the name on spaces. We will reassemble after parsing out the other ids
-        const tokens = testCaseName.split(' ');
-        let testRailTestCaseId;
-        let applauseTestCaseId;
-        tokens.forEach(token => {
-            if (token?.startsWith(this.TEST_RAIL_CASE_ID_PREFIX)) {
-                if (testRailTestCaseId !== undefined) {
-                    console.warn('Multiple TestRail case ids detected in testCase name');
-                }
-                testRailTestCaseId = token.substring(this.TEST_RAIL_CASE_ID_PREFIX.length);
-            }
-            else if (token?.startsWith(this.APPLAUSE_CASE_ID_PREFIX)) {
-                if (applauseTestCaseId !== undefined) {
-                    console.warn('Multiple Applause case ids detected in testCase name');
-                }
-                applauseTestCaseId = token.substring(this.APPLAUSE_CASE_ID_PREFIX.length);
-            }
-        });
-        return {
-            applauseTestCaseId,
-            testRailTestCaseId,
-            testCaseName: tokens
-                .filter(token => token !==
-                `${this.TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`)
-                .filter(token => token !==
-                `${this.APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`)
-                .join(' '),
-        };
-    }
-    async runnerEnd() {
-        // Wait for all results to be created
-        const resultIds = (await Promise.all(Object.values(this.uidToResultIdMap))) || [];
-        // Wait for the results to be submitted
-        void (await Promise.all(Object.values(this.resultSubmissionMap)));
-        // Wait the heartbeat to be ended
-        void (await this.heartbeatService.end());
-        void (await this.autoApi.endTestRun(this.testRunId));
-        // Fetch the provider session asset links and save them off to a file
-        const resp = await this.autoApi.getProviderSessionLinks(resultIds);
-        const jsonArray = resp.data || [];
-        if (jsonArray.length > 0) {
-            console.info(JSON.stringify(jsonArray));
-            // this is the wdio.conf outputDir
-            const outputPath = '.';
-            writeFileSync(join(outputPath, 'providerUrls.txt'), JSON.stringify(jsonArray, null, 1));
-        }
-    }
-}
-
-export { ApplauseReporter, AutoApi, TestResultStatus, TestRunHeartbeatService, _validateCtorParams };
+export { AutoApi, TestResultStatus, TestRunHeartbeatService, _validateCtorParams };
 //# sourceMappingURL=index.mjs.map

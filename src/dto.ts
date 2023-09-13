@@ -1,13 +1,3 @@
-import { AxiosInstance } from 'axios';
-
-/**
- * Configuration of the auto-api client
- */
-export type ClientConfig = {
-  readonly baseUrl: string;
-  readonly apiKey: string;
-};
-
 /**
  * DTO used to create a new Applause test run
  */
@@ -106,11 +96,4 @@ export interface TestRailOptions {
   runName: string;
   addAllTestsToPlan?: boolean;
   overrideTestRailRunUniqueness?: boolean;
-}
-
-export interface ApplauseConfig {
-  readonly clientConfig: ClientConfig | AxiosInstance;
-  readonly productId: number;
-  readonly testRailOptions?: TestRailOptions;
-  readonly applauseTestCycleId?: number;
 }
