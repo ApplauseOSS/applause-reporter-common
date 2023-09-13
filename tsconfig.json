@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node14/tsconfig.json",
+  "extends": "@tsconfig/node20/tsconfig.json",
   "ts-node": {
     "transpileOnly": true,
     "compilerOptions": {
@@ -15,7 +15,6 @@
     "declarationMap": true,
     "declarationDir": "types",
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "strictNullChecks": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,
@@ -26,6 +25,8 @@
     "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
     "pretty": true
   },
   "include": [
