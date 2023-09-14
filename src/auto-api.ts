@@ -1,7 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {
-  ApplauseConfig,
-  ClientConfig,
   CreateTestCaseResultDto,
   CreateTestCaseResultResponseDto,
   SubmitTestCaseResultDto,
@@ -10,8 +8,7 @@ import {
   TestRunCreateResponseDto,
 } from './dto.ts';
 import { API_VERSION } from './version.ts';
-import Validator from 'validator';
-const validator = Validator.default;
+import { ApplauseConfig, validateConfig } from './config.ts';
 
 export class AutoApi {
   private readonly client: AxiosInstance;
@@ -26,18 +23,16 @@ export class AutoApi {
 
   constructor(readonly options: ApplauseConfig) {
     this.callsInFlight = 0;
-    _validateCtorParams(options);
-    this.client = _isAxiosInstance(options.clientConfig)
-      ? options.clientConfig
-      : axios.create({
-          baseURL: options.clientConfig.baseUrl,
-          timeout: 10000,
-          headers: {
-            'X-Api-Key': options.clientConfig.apiKey,
-            'Context-Type': 'application/json',
-          },
-          responseType: 'json',
-        });
+    validateConfig(options);
+    this.client = axios.create({
+      baseURL: options.baseUrl,
+      timeout: 10000,
+      headers: {
+        'X-Api-Key': options.apiKey,
+        'Context-Type': 'application/json',
+      },
+      responseType: 'json',
+    });
   }
 
   async startTestRun(
@@ -136,52 +131,3 @@ export class AutoApi {
     }
   }
 }
-
-/**
- *
- * @param clientConfig user defined type check to see if we were passed an already built AxoisIntance or regular ClientConfig
- */
-const _isAxiosInstance = (
-  clientConfig: ClientConfig | AxiosInstance
-): clientConfig is AxiosInstance => {
-  // we check for property "request" to see if client config object is an Axois instance or regular ClientConfig
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  return (clientConfig as AxiosInstance).request !== undefined;
-};
-
-/**
- * Exposed for testing. Don't use this!
- * @private
- *
- * @param params mirrored constructor args from AutoApi class
- */
-export const _validateCtorParams = (
-  ...params: ConstructorParameters<typeof AutoApi>
-): void => {
-  // product ID sanity
-  if (!Number.isInteger(params[0].productId) || params[0].productId <= 0) {
-    throw new Error(
-      `productId must be a positive integer, was: '${params[0].productId}'`
-    );
-  }
-  // check for specific options if pre-built client wasn't passed
-  if (!_isAxiosInstance(params[0].clientConfig)) {
-    // Base URL sanity
-    if (
-      !validator.isURL(params[0].clientConfig.baseUrl, {
-        protocols: ['http', 'https'],
-        require_tld: false, // allow localhost
-        require_host: true,
-        require_protocol: true,
-      })
-    ) {
-      throw new Error(
-        `baseUrl is not valid HTTP/HTTPS URL, was: ${params[0].clientConfig.baseUrl}`
-      );
-    }
-    // API Key sanity
-    if (validator.isEmpty(params[0].clientConfig.apiKey)) {
-      throw new Error('apiKey is an empty string!');
-    }
-  }
-};

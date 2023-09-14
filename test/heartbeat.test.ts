@@ -44,7 +44,8 @@ async function waitForNextHeartbeat() {
   await Promise.resolve();
 }
 const autoApi = new AutoApi({
-  clientConfig: { apiKey: 'apiKey', baseUrl: 'http://localhost' },
+  apiKey: 'apiKey',
+  baseUrl: 'http://localhost',
   productId: 1,
 });
 const heartbeatCommandSpy = jest.spyOn(autoApi, 'sendSdkHeartbeat');

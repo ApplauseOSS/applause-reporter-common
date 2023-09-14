@@ -58,10 +58,8 @@ describe('reporter test', () => {
 
   beforeEach(() => {
     reporter = new ApplauseReporter({
-      clientConfig: {
-        apiKey: 'apiKey',
-        baseUrl: 'localhost',
-      },
+      apiKey: 'apiKey',
+      baseUrl: 'localhost',
       productId: 1,
     });
   });

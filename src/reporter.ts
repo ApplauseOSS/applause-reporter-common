@@ -3,11 +3,11 @@ import { AutoApi } from './auto-api.ts';
 import {
   AdditionalTestCaseParams,
   AdditionalTestCaseResultParams,
-  ApplauseConfig,
   TestResultStatus,
 } from './dto.ts';
 import { TestRunHeartbeatService } from './heartbeat.ts';
 import { join as pathJoin } from 'path';
+import { ApplauseConfig } from './config.ts';
 
 export class ApplauseReporter {
   private autoApi: AutoApi;
