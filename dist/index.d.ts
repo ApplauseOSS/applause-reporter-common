@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 
 /**
  * Configuration of the auto-api client
@@ -82,12 +82,25 @@ interface TestRailOptions {
     addAllTestsToPlan?: boolean;
     overrideTestRailRunUniqueness?: boolean;
 }
+
 interface ApplauseConfig {
-    readonly clientConfig: ClientConfig | AxiosInstance;
+    readonly baseUrl: string;
+    readonly apiKey: string;
     readonly productId: number;
     readonly testRailOptions?: TestRailOptions;
     readonly applauseTestCycleId?: number;
 }
+declare const DEFAULT_URL = "https://prod-auto-api.cloud.applause.com/";
+interface ConfigLoadProperties {
+    configFile?: string;
+    properties?: Partial<ApplauseConfig>;
+}
+declare function loadConfig(loadOptions?: ConfigLoadProperties): ApplauseConfig;
+declare function overrideConfig(config: Partial<ApplauseConfig>, overrides?: Partial<ApplauseConfig>): Partial<ApplauseConfig>;
+declare function isComplete(config: Partial<ApplauseConfig>): boolean;
+declare function loadConfigFromFile(configFile?: string): Partial<ApplauseConfig>;
+declare function validateConfig(config: ApplauseConfig): void;
+declare function validatePartialConfig(config: Partial<ApplauseConfig>): void;
 
 declare class AutoApi {
     readonly options: ApplauseConfig;
@@ -105,13 +118,6 @@ declare class AutoApi {
     getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo[]>>;
     sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<void>>;
 }
-/**
- * Exposed for testing. Don't use this!
- * @private
- *
- * @param params mirrored constructor args from AutoApi class
- */
-declare const _validateCtorParams: (options: ApplauseConfig) => void;
 
 declare class TestRunHeartbeatService {
     readonly testRunId: number;
@@ -137,4 +143,4 @@ declare class ApplauseReporter {
     runnerEnd(): Promise<void>;
 }
 
-export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, _validateCtorParams };
+export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };

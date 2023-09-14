@@ -1,13 +1,83 @@
 'use strict';
 
 var axios = require('axios');
-var Validator = require('validator');
 var fs = require('fs');
 var path = require('path');
+var Validator = require('validator');
 
 const API_VERSION = '1.0.0';
 
 const validator = Validator.default;
+const DEFAULT_URL = 'https://prod-auto-api.cloud.applause.com/';
+// Loads the configuration
+function loadConfig(loadOptions) {
+    // Setup the initial config with any default properties
+    let config = {
+        baseUrl: DEFAULT_URL,
+    };
+    // Load properties from the provided config file
+    if (loadOptions !== undefined && loadOptions.configFile !== undefined) {
+        config = overrideConfig(config, loadConfigFromFile(path.join(process.cwd(), loadOptions.configFile)));
+    }
+    else {
+        // Override from the default config file
+        config = overrideConfig(config, loadConfigFromFile());
+    }
+    // Then load in the file override properties
+    if (loadOptions !== undefined && loadOptions.properties !== undefined) {
+        config = overrideConfig(config, loadOptions.properties);
+    }
+    if (!isComplete(config)) {
+        throw new Error('Config is not complete');
+    }
+    // We know that the config is complete, so we can cast
+    const finalConfig = config;
+    validateConfig(finalConfig);
+    return finalConfig;
+}
+function overrideConfig(config, overrides) {
+    return {
+        ...config,
+        ...overrides,
+    };
+}
+function isComplete(config) {
+    return (config.baseUrl !== undefined &&
+        config.apiKey !== undefined &&
+        config.productId !== undefined);
+}
+function loadConfigFromFile(configFile) {
+    const fileCotents = fs.readFileSync(configFile || process.cwd() + '/applause.json', 'utf8');
+    return JSON.parse(fileCotents);
+}
+function validateConfig(config) {
+    if (!Number.isInteger(config.productId) || config.productId <= 0) {
+        throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
+    }
+    if (!validator.isURL(config.baseUrl, {
+        protocols: ['http', 'https'],
+        require_tld: false,
+        allow_query_components: false,
+        disallow_auth: true,
+        allow_fragments: false,
+        allow_protocol_relative_urls: false,
+        allow_trailing_dot: false,
+        require_host: true,
+        require_protocol: true,
+    })) {
+        throw new Error(`baseUrl is not valid HTTP/HTTPS URL, was: ${config.baseUrl}`);
+    }
+    if (validator.isEmpty(config.apiKey)) {
+        throw new Error('apiKey is an empty string!');
+    }
+}
+function validatePartialConfig(config) {
+    if (config.productId !== undefined &&
+        (!Number.isInteger(config.productId) || config.productId <= 0)) {
+        throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
+    }
+}
+
 class AutoApi {
     options;
     client;
@@ -21,18 +91,16 @@ class AutoApi {
     constructor(options) {
         this.options = options;
         this.callsInFlight = 0;
-        _validateCtorParams(options);
-        this.client = _isAxiosInstance(options.clientConfig)
-            ? options.clientConfig
-            : axios.create({
-                baseURL: options.clientConfig.baseUrl,
-                timeout: 10000,
-                headers: {
-                    'X-Api-Key': options.clientConfig.apiKey,
-                    'Context-Type': 'application/json',
-                },
-                responseType: 'json',
-            });
+        validateConfig(options);
+        this.client = axios.create({
+            baseURL: options.baseUrl,
+            timeout: 10000,
+            headers: {
+                'X-Api-Key': options.apiKey,
+                'Context-Type': 'application/json',
+            },
+            responseType: 'json',
+        });
     }
     async startTestRun(info) {
         this.callsInFlight += 1;
@@ -108,43 +176,6 @@ class AutoApi {
         }
     }
 }
-/**
- *
- * @param clientConfig user defined type check to see if we were passed an already built AxoisIntance or regular ClientConfig
- */
-const _isAxiosInstance = (clientConfig) => {
-    // we check for property "request" to see if client config object is an Axois instance or regular ClientConfig
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return clientConfig.request !== undefined;
-};
-/**
- * Exposed for testing. Don't use this!
- * @private
- *
- * @param params mirrored constructor args from AutoApi class
- */
-const _validateCtorParams = (...params) => {
-    // product ID sanity
-    if (!Number.isInteger(params[0].productId) || params[0].productId <= 0) {
-        throw new Error(`productId must be a positive integer, was: '${params[0].productId}'`);
-    }
-    // check for specific options if pre-built client wasn't passed
-    if (!_isAxiosInstance(params[0].clientConfig)) {
-        // Base URL sanity
-        if (!validator.isURL(params[0].clientConfig.baseUrl, {
-            protocols: ['http', 'https'],
-            require_tld: false,
-            require_host: true,
-            require_protocol: true,
-        })) {
-            throw new Error(`baseUrl is not valid HTTP/HTTPS URL, was: ${params[0].clientConfig.baseUrl}`);
-        }
-        // API Key sanity
-        if (validator.isEmpty(params[0].clientConfig.apiKey)) {
-            throw new Error('apiKey is an empty string!');
-        }
-    }
-};
 
 /**
  * Enum representing a test result's status
@@ -339,6 +370,12 @@ class RunReporter {
 
 exports.ApplauseReporter = ApplauseReporter;
 exports.AutoApi = AutoApi;
+exports.DEFAULT_URL = DEFAULT_URL;
 exports.TestRunHeartbeatService = TestRunHeartbeatService;
-exports._validateCtorParams = _validateCtorParams;
+exports.isComplete = isComplete;
+exports.loadConfig = loadConfig;
+exports.loadConfigFromFile = loadConfigFromFile;
+exports.overrideConfig = overrideConfig;
+exports.validateConfig = validateConfig;
+exports.validatePartialConfig = validatePartialConfig;
 //# sourceMappingURL=index.js.map

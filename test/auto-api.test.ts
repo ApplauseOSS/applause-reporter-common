@@ -1,9 +1,10 @@
-import { AutoApi, _validateCtorParams } from '../src/auto-api.ts';
+import { AutoApi } from '../src/auto-api.ts';
 
 jest.setTimeout(400_000);
 test('should create the thing', () => {
   const autoApi = new AutoApi({
-    clientConfig: { baseUrl: 'http://www.example.com', apiKey: 'apiKey' },
+    baseUrl: 'http://www.example.com',
+    apiKey: 'apiKey',
     productId: 1,
   });
   expect(autoApi).not.toBeUndefined();
@@ -11,11 +12,9 @@ test('should create the thing', () => {
 
 test('providing bogus productId should throw an exception', () => {
   const test = () => {
-    _validateCtorParams({
-      clientConfig: {
-        baseUrl: 'http://www.example.com',
-        apiKey: 'fakeApiKey',
-      },
+    new AutoApi({
+      baseUrl: 'http://www.example.com',
+      apiKey: 'apiKey',
       productId: -1,
     });
   };
