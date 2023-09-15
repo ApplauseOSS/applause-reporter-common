@@ -63,4 +63,23 @@ describe('config loader', () => {
       })
     ).toThrowError('apiKey is an empty string!');
   });
+
+  it('should not override properties with undefined', () => {
+    const config = loadConfig({
+      configFile: './test/resources/applause-with-url.json',
+      properties: {
+        apiKey: undefined,
+        applauseTestCycleId: undefined,
+        baseUrl: undefined,
+        productId: undefined,
+        testRailOptions: undefined,
+      },
+    });
+
+    expect(config.baseUrl).toBe('http://localhost:8080');
+    expect(config.apiKey).toBe('fakeKey');
+    expect(config.productId).toBe(1);
+    expect(config.applauseTestCycleId).toBeUndefined();
+    expect(config.testRailOptions).toBeUndefined();
+  });
 });

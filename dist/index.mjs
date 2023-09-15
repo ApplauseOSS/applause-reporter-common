@@ -34,10 +34,7 @@ function loadConfig(loadOptions) {
     return finalConfig;
 }
 function overrideConfig(config, overrides) {
-    return {
-        ...config,
-        ...overrides,
-    };
+    return Object.assign({}, config, Object.fromEntries(Object.entries(overrides || {}).filter(([_, v]) => v !== undefined)));
 }
 function isComplete(config) {
     return (config.baseUrl !== undefined &&
