@@ -44,7 +44,11 @@ function isComplete(config) {
         config.productId !== undefined);
 }
 function loadConfigFromFile(configFile) {
-    const fileCotents = fs.readFileSync(configFile || process.cwd() + '/applause.json', 'utf8');
+    const configFilePath = configFile || process.cwd() + '/applause.json';
+    if (!fs.existsSync(configFilePath)) {
+        return {};
+    }
+    const fileCotents = fs.readFileSync(configFilePath, 'utf8');
     return JSON.parse(fileCotents);
 }
 function validateConfig(config) {

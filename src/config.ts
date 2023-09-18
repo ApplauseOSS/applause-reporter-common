@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { TestRailOptions } from './dto.ts';
 import path from 'path';
 
@@ -79,10 +79,11 @@ export function isComplete(config: Partial<ApplauseConfig>): boolean {
 export function loadConfigFromFile(
   configFile?: string
 ): Partial<ApplauseConfig> {
-  const fileCotents = readFileSync(
-    configFile || process.cwd() + '/applause.json',
-    'utf8'
-  );
+  const configFilePath = configFile || process.cwd() + '/applause.json';
+  if (!existsSync(configFilePath)) {
+    return {};
+  }
+  const fileCotents = readFileSync(configFilePath, 'utf8');
   return JSON.parse(fileCotents) as Partial<ApplauseConfig>;
 }
 

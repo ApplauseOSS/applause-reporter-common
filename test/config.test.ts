@@ -82,4 +82,15 @@ describe('config loader', () => {
     expect(config.applauseTestCycleId).toBeUndefined();
     expect(config.testRailOptions).toBeUndefined();
   });
+
+  it('should resume when the config file is missing', () => {
+    const config = loadConfig({
+      configFile: './test/resources/not-found.json',
+      properties: {
+        apiKey: 'fakeKey',
+        productId: 1,
+      },
+    });
+    expect(config).not.toBeNull();
+  });
 });
