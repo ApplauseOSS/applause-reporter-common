@@ -13,6 +13,8 @@ export class ApplauseReporter {
   private autoApi: AutoApi;
   private initializer: RunInitializer;
   private reporter?: Promise<RunReporter>;
+  private runStarted: boolean = false;
+  private runFinished: boolean = false;
 
   constructor(config: ApplauseConfig) {
     this.autoApi = new AutoApi(config);
@@ -21,6 +23,9 @@ export class ApplauseReporter {
 
   public runnerStart(tests?: string[]): void {
     this.reporter = this.initializer.initializeRun(tests);
+    void this.reporter.then(() => {
+      this.runStarted = true;
+    });
   }
 
   public startTestCase(
@@ -57,7 +62,17 @@ export class ApplauseReporter {
     if (this.reporter === undefined) {
       throw new Error('Cannot end a run that was never initialized');
     }
-    await this.reporter.then(reporter => reporter.runnerEnd());
+    await this.reporter
+      .then(reporter => reporter.runnerEnd())
+      .then(() => (this.runFinished = true));
+  }
+
+  public isSynchronized(): boolean {
+    // Verify the run is not yet started or it has ended, and all calls made to the applause api have finished
+    return (
+      (!this.runStarted || (this.runStarted && this.runFinished)) &&
+      this.autoApi.getCallsInFlight == 0
+    );
   }
 }
 

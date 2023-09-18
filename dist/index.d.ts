@@ -136,11 +136,14 @@ declare class ApplauseReporter {
     private autoApi;
     private initializer;
     private reporter?;
+    private runStarted;
+    private runFinished;
     constructor(config: ApplauseConfig);
     runnerStart(tests?: string[]): void;
     startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): void;
     submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
     runnerEnd(): Promise<void>;
+    isSynchronized(): boolean;
 }
 
 export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
