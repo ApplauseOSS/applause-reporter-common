@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import Validator from 'validator';
 
@@ -42,7 +42,11 @@ function isComplete(config) {
         config.productId !== undefined);
 }
 function loadConfigFromFile(configFile) {
-    const fileCotents = readFileSync(configFile || process.cwd() + '/applause.json', 'utf8');
+    const configFilePath = configFile || process.cwd() + '/applause.json';
+    if (!existsSync(configFilePath)) {
+        return {};
+    }
+    const fileCotents = readFileSync(configFilePath, 'utf8');
     return JSON.parse(fileCotents);
 }
 function validateConfig(config) {
