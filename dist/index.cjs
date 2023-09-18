@@ -391,4 +391,4 @@ exports.loadConfigFromFile = loadConfigFromFile;
 exports.overrideConfig = overrideConfig;
 exports.validateConfig = validateConfig;
 exports.validatePartialConfig = validatePartialConfig;
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=index.cjs.map
