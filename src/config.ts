@@ -59,10 +59,13 @@ export function overrideConfig(
   config: Partial<ApplauseConfig>,
   overrides?: Partial<ApplauseConfig>
 ): Partial<ApplauseConfig> {
-  return {
-    ...config,
-    ...overrides,
-  };
+  return Object.assign(
+    {},
+    config,
+    Object.fromEntries(
+      Object.entries(overrides || {}).filter(([_, v]) => v !== undefined)
+    )
+  );
 }
 
 export function isComplete(config: Partial<ApplauseConfig>): boolean {
