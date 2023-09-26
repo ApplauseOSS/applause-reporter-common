@@ -76,7 +76,7 @@ export class ApplauseReporter {
   }
 }
 
-class RunInitializer {
+export class RunInitializer {
   constructor(private autoApi: AutoApi) {}
 
   async initializeRun(tests?: string[]): Promise<RunReporter> {
@@ -97,7 +97,7 @@ class RunInitializer {
   }
 }
 
-class RunReporter {
+export class RunReporter {
   private readonly TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
   private readonly APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
 
@@ -124,7 +124,9 @@ class RunReporter {
 
         testRunId: this.testRunId,
         // If the additional params provides either test case id, it will override the parsed value we set above
-        ...params,
+        ...Object.fromEntries(
+          Object.entries(params || {}).filter(([_, v]) => v !== undefined)
+        ),
       })
       .then(res => {
         return res.data.testResultId;

@@ -26,8 +26,8 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/",
-    "lint": "eslint ./src/ ./test/ --fix",
-    "lint-verify": "eslint ./src/ ./test/",
+    "lint": "eslint ./src/ --fix",
+    "lint-verify": "eslint ./src/",
     "build": "rollup -c --bundleConfigAsCjs",
     "test": "yarn jest",
     "publish-verify": "npm publish --dry-run",

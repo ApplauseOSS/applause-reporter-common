@@ -1,40 +1,49 @@
-import { ApplauseReporter } from '../src/reporter.ts';
+import { ApplauseReporter, RunReporter } from '../src/reporter.ts';
 import {
+  CreateTestCaseResultDto,
+  CreateTestCaseResultResponseDto,
   TestResultProviderInfo,
   TestResultStatus,
   TestRunCreateResponseDto,
 } from '../src/dto.ts';
+import { TestRunHeartbeatService } from '../src/heartbeat.ts';
+import { AutoApi } from '../src/auto-api.ts';
+
+const mockedAutoApi = {
+  startTestRun: function (): Promise<{ data: TestRunCreateResponseDto }> {
+    return Promise.resolve({
+      data: { runId: 0 },
+      status: 200,
+      statusText: 'Ok',
+    });
+  },
+  endTestRun: jest.fn(() => {
+    return Promise.resolve();
+  }),
+  startTestCase: jest.fn((req: any) => {
+    return Promise.resolve({
+      data: {
+        testResultId: 1,
+      } as CreateTestCaseResultResponseDto,
+      status: 200,
+      statusTest: 'Ok',
+      request: req,
+    });
+  }),
+  submitTestCaseResult: jest.fn(() => {
+    return Promise.resolve();
+  }),
+  getProviderSessionLinks: function (): Promise<TestResultProviderInfo[]> {
+    return Promise.resolve([]);
+  },
+  sendSdkHeartbeat: function (): Promise<void> {
+    return Promise.resolve();
+  },
+};
 
 jest.mock('../src/auto-api.ts', () => {
   return {
-    AutoApi: jest.fn().mockImplementation(() => {
-      return {
-        startTestRun: function (): Promise<{ data: TestRunCreateResponseDto }> {
-          return Promise.resolve({
-            data: { runId: 0 },
-            status: 200,
-            statusText: 'Ok',
-          });
-        },
-        endTestRun: function (): Promise<void> {
-          return Promise.resolve();
-        },
-        startTestCase: function (): Promise<void> {
-          return Promise.resolve();
-        },
-        submitTestCaseResult: function (): Promise<void> {
-          return Promise.resolve();
-        },
-        getProviderSessionLinks: function (): Promise<
-          TestResultProviderInfo[]
-        > {
-          return Promise.resolve([]);
-        },
-        sendSdkHeartbeat: function (): Promise<void> {
-          return Promise.resolve();
-        },
-      };
-    }),
+    AutoApi: jest.fn().mockImplementation(() => mockedAutoApi),
   };
 });
 
@@ -52,11 +61,12 @@ jest.mock('../src/heartbeat.ts', () => {
     }),
   };
 });
-
+jest.useFakeTimers();
 describe('reporter test', () => {
   let reporter: ApplauseReporter;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     reporter = new ApplauseReporter({
       apiKey: 'apiKey',
       baseUrl: 'localhost',
@@ -94,4 +104,113 @@ describe('reporter test', () => {
       return;
     }
   }, 10000);
+
+  it('should pass the test case name and run id', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'Test');
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+    } as CreateTestCaseResultDto);
+  });
+  it('should extract out the testrail id', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'TestRail-1234 Test');
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+      testCaseId: '1234',
+    } as CreateTestCaseResultDto);
+  });
+  it('should extract out the applause test case id', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'Applause-1234 Test');
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+      itwTestCaseId: '1234',
+    } as CreateTestCaseResultDto);
+  });
+  it('should allow overwriting of testrail test case id', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'TestRail-1234 Test', { testCaseId: '4567' });
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+      testCaseId: '4567',
+    } as CreateTestCaseResultDto);
+  });
+  it('should allow overwriting of applause test case id', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'Applause-1234 Test', { itwTestCaseId: '4567' });
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+      itwTestCaseId: '4567',
+    } as CreateTestCaseResultDto);
+  });
+  it('should not overwrite the test case id if other values are passed', () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const rr = new RunReporter(
+      mockedAutoApi,
+      0,
+      new TestRunHeartbeatService(0, mockedAutoApi)
+    );
+    rr.startTestCase('test', 'TestRail-1234 Test', { itwTestCaseId: '4567' });
+    expect(mockedAutoApi.startTestCase).toHaveBeenCalledWith({
+      testCaseName: 'Test',
+      testRunId: 0,
+      testCaseId: '1234',
+      itwTestCaseId: '4567',
+    } as CreateTestCaseResultDto);
+  });
 });
