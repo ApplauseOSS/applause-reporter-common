@@ -145,5 +145,29 @@ declare class ApplauseReporter {
     runnerEnd(): Promise<void>;
     isSynchronized(): boolean;
 }
+declare class RunInitializer {
+    private autoApi;
+    constructor(autoApi: AutoApi);
+    initializeRun(tests?: string[]): Promise<RunReporter>;
+}
+declare class RunReporter {
+    private autoApi;
+    private testRunId;
+    private heartbeatService;
+    private readonly TEST_RAIL_CASE_ID_PREFIX;
+    private readonly APPLAUSE_CASE_ID_PREFIX;
+    private uidToResultIdMap;
+    private resultSubmissionMap;
+    constructor(autoApi: AutoApi, testRunId: number, heartbeatService: TestRunHeartbeatService);
+    startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): void;
+    submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
+    parseTestCaseName(testCaseName: string): ParsedTestCaseName;
+    runnerEnd(): Promise<void>;
+}
+interface ParsedTestCaseName {
+    testCaseName: string;
+    testRailTestCaseId?: string;
+    applauseTestCaseId?: string;
+}
 
-export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
+export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, RunInitializer, RunReporter, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };

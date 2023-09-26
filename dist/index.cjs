@@ -318,7 +318,7 @@ class RunReporter {
             itwTestCaseId: parsedTestCase.applauseTestCaseId,
             testRunId: this.testRunId,
             // If the additional params provides either test case id, it will override the parsed value we set above
-            ...params,
+            ...Object.fromEntries(Object.entries(params || {}).filter(([_, v]) => v !== undefined)),
         })
             .then(res => {
             return res.data.testResultId;
@@ -384,6 +384,8 @@ class RunReporter {
 exports.ApplauseReporter = ApplauseReporter;
 exports.AutoApi = AutoApi;
 exports.DEFAULT_URL = DEFAULT_URL;
+exports.RunInitializer = RunInitializer;
+exports.RunReporter = RunReporter;
 exports.TestRunHeartbeatService = TestRunHeartbeatService;
 exports.isComplete = isComplete;
 exports.loadConfig = loadConfig;
