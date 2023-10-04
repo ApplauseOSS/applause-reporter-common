@@ -80,8 +80,11 @@ export class RunInitializer {
   constructor(private autoApi: AutoApi) {}
 
   async initializeRun(tests?: string[]): Promise<RunReporter> {
+    const cleanedTests = tests
+      ?.map(parseTestCaseName)
+      .map(parsed => parsed.testCaseName.trim());
     const testRunCreateResponse = await this.autoApi.startTestRun({
-      tests: tests || [],
+      tests: cleanedTests || [],
     });
     if (
       testRunCreateResponse.status < 200 ||
@@ -98,9 +101,6 @@ export class RunInitializer {
 }
 
 export class RunReporter {
-  private readonly TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
-  private readonly APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
-
   private uidToResultIdMap: Record<string, Promise<number>> = {};
   private resultSubmissionMap: Record<string, Promise<void>> = {};
 
@@ -115,7 +115,7 @@ export class RunReporter {
     testCaseName: string,
     params?: AdditionalTestCaseParams
   ): void {
-    const parsedTestCase = this.parseTestCaseName(testCaseName);
+    const parsedTestCase = parseTestCaseName(testCaseName);
     this.uidToResultIdMap[id] = this.autoApi
       .startTestCase({
         testCaseName: parsedTestCase.testCaseName,
@@ -147,46 +147,6 @@ export class RunReporter {
     );
   }
 
-  public parseTestCaseName(testCaseName: string): ParsedTestCaseName {
-    // Split the name on spaces. We will reassemble after parsing out the other ids
-    const tokens = testCaseName.split(' ');
-    let testRailTestCaseId: string | undefined;
-    let applauseTestCaseId: string | undefined;
-    tokens.forEach(token => {
-      if (token?.startsWith(this.TEST_RAIL_CASE_ID_PREFIX)) {
-        if (testRailTestCaseId !== undefined) {
-          console.warn('Multiple TestRail case ids detected in testCase name');
-        }
-        testRailTestCaseId = token.substring(
-          this.TEST_RAIL_CASE_ID_PREFIX.length
-        );
-      } else if (token?.startsWith(this.APPLAUSE_CASE_ID_PREFIX)) {
-        if (applauseTestCaseId !== undefined) {
-          console.warn('Multiple Applause case ids detected in testCase name');
-        }
-        applauseTestCaseId = token.substring(
-          this.APPLAUSE_CASE_ID_PREFIX.length
-        );
-      }
-    });
-    return {
-      applauseTestCaseId,
-      testRailTestCaseId,
-      testCaseName: tokens
-        .filter(
-          token =>
-            token !==
-            `${this.TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`
-        )
-        .filter(
-          token =>
-            token !==
-            `${this.APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`
-        )
-        .join(' '),
-    };
-  }
-
   public async runnerEnd(): Promise<void> {
     // Wait for all results to be created
     const resultIds =
@@ -212,6 +172,43 @@ export class RunReporter {
       );
     }
   }
+}
+const TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
+const APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
+
+function parseTestCaseName(testCaseName: string): ParsedTestCaseName {
+  // Split the name on spaces. We will reassemble after parsing out the other ids
+  const tokens = testCaseName.split(' ');
+  let testRailTestCaseId: string | undefined;
+  let applauseTestCaseId: string | undefined;
+  tokens.forEach(token => {
+    if (token?.startsWith(TEST_RAIL_CASE_ID_PREFIX)) {
+      if (testRailTestCaseId !== undefined) {
+        console.warn('Multiple TestRail case ids detected in testCase name');
+      }
+      testRailTestCaseId = token.substring(TEST_RAIL_CASE_ID_PREFIX.length);
+    } else if (token?.startsWith(APPLAUSE_CASE_ID_PREFIX)) {
+      if (applauseTestCaseId !== undefined) {
+        console.warn('Multiple Applause case ids detected in testCase name');
+      }
+      applauseTestCaseId = token.substring(APPLAUSE_CASE_ID_PREFIX.length);
+    }
+  });
+  return {
+    applauseTestCaseId,
+    testRailTestCaseId,
+    testCaseName: tokens
+      .filter(
+        token =>
+          token !== `${TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`
+      )
+      .filter(
+        token =>
+          token !== `${APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`
+      )
+      .join(' ')
+      .trim(),
+  };
 }
 
 interface ParsedTestCaseName {

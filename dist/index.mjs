@@ -280,8 +280,11 @@ class RunInitializer {
         this.autoApi = autoApi;
     }
     async initializeRun(tests) {
+        const cleanedTests = tests
+            ?.map(parseTestCaseName)
+            .map(parsed => parsed.testCaseName.trim());
         const testRunCreateResponse = await this.autoApi.startTestRun({
-            tests: tests || [],
+            tests: cleanedTests || [],
         });
         if (testRunCreateResponse.status < 200 ||
             testRunCreateResponse.status > 300) {
@@ -298,8 +301,6 @@ class RunReporter {
     autoApi;
     testRunId;
     heartbeatService;
-    TEST_RAIL_CASE_ID_PREFIX = 'TestRail-';
-    APPLAUSE_CASE_ID_PREFIX = 'Applause-';
     uidToResultIdMap = {};
     resultSubmissionMap = {};
     constructor(autoApi, testRunId, heartbeatService) {
@@ -308,7 +309,7 @@ class RunReporter {
         this.heartbeatService = heartbeatService;
     }
     startTestCase(id, testCaseName, params) {
-        const parsedTestCase = this.parseTestCaseName(testCaseName);
+        const parsedTestCase = parseTestCaseName(testCaseName);
         this.uidToResultIdMap[id] = this.autoApi
             .startTestCase({
             testCaseName: parsedTestCase.testCaseName,
@@ -329,36 +330,6 @@ class RunReporter {
             ...params,
         }));
     }
-    parseTestCaseName(testCaseName) {
-        // Split the name on spaces. We will reassemble after parsing out the other ids
-        const tokens = testCaseName.split(' ');
-        let testRailTestCaseId;
-        let applauseTestCaseId;
-        tokens.forEach(token => {
-            if (token?.startsWith(this.TEST_RAIL_CASE_ID_PREFIX)) {
-                if (testRailTestCaseId !== undefined) {
-                    console.warn('Multiple TestRail case ids detected in testCase name');
-                }
-                testRailTestCaseId = token.substring(this.TEST_RAIL_CASE_ID_PREFIX.length);
-            }
-            else if (token?.startsWith(this.APPLAUSE_CASE_ID_PREFIX)) {
-                if (applauseTestCaseId !== undefined) {
-                    console.warn('Multiple Applause case ids detected in testCase name');
-                }
-                applauseTestCaseId = token.substring(this.APPLAUSE_CASE_ID_PREFIX.length);
-            }
-        });
-        return {
-            applauseTestCaseId,
-            testRailTestCaseId,
-            testCaseName: tokens
-                .filter(token => token !==
-                `${this.TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`)
-                .filter(token => token !==
-                `${this.APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`)
-                .join(' '),
-        };
-    }
     async runnerEnd() {
         // Wait for all results to be created
         const resultIds = (await Promise.all(Object.values(this.uidToResultIdMap))) || [];
@@ -377,6 +348,37 @@ class RunReporter {
             writeFileSync(join(outputPath, 'providerUrls.txt'), JSON.stringify(jsonArray, null, 1));
         }
     }
+}
+const TEST_RAIL_CASE_ID_PREFIX = 'TestRail-';
+const APPLAUSE_CASE_ID_PREFIX = 'Applause-';
+function parseTestCaseName(testCaseName) {
+    // Split the name on spaces. We will reassemble after parsing out the other ids
+    const tokens = testCaseName.split(' ');
+    let testRailTestCaseId;
+    let applauseTestCaseId;
+    tokens.forEach(token => {
+        if (token?.startsWith(TEST_RAIL_CASE_ID_PREFIX)) {
+            if (testRailTestCaseId !== undefined) {
+                console.warn('Multiple TestRail case ids detected in testCase name');
+            }
+            testRailTestCaseId = token.substring(TEST_RAIL_CASE_ID_PREFIX.length);
+        }
+        else if (token?.startsWith(APPLAUSE_CASE_ID_PREFIX)) {
+            if (applauseTestCaseId !== undefined) {
+                console.warn('Multiple Applause case ids detected in testCase name');
+            }
+            applauseTestCaseId = token.substring(APPLAUSE_CASE_ID_PREFIX.length);
+        }
+    });
+    return {
+        applauseTestCaseId,
+        testRailTestCaseId,
+        testCaseName: tokens
+            .filter(token => token !== `${TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`)
+            .filter(token => token !== `${APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`)
+            .join(' ')
+            .trim(),
+    };
 }
 
 export { ApplauseReporter, AutoApi, DEFAULT_URL, RunInitializer, RunReporter, TestResultStatus, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };

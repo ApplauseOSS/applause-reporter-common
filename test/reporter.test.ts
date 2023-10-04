@@ -1,22 +1,23 @@
-import { ApplauseReporter, RunReporter } from '../src/reporter.ts';
+import { ApplauseReporter, RunInitializer, RunReporter } from '../src/reporter.ts';
 import {
   CreateTestCaseResultDto,
   CreateTestCaseResultResponseDto,
   TestResultProviderInfo,
   TestResultStatus,
-  TestRunCreateResponseDto,
+  TestRunCreateDto,
 } from '../src/dto.ts';
 import { TestRunHeartbeatService } from '../src/heartbeat.ts';
 import { AutoApi } from '../src/auto-api.ts';
 
 const mockedAutoApi = {
-  startTestRun: function (): Promise<{ data: TestRunCreateResponseDto }> {
+  startTestRun:  jest.fn((req: any) => {
     return Promise.resolve({
       data: { runId: 0 },
       status: 200,
       statusText: 'Ok',
+      request: req,
     });
-  },
+  }),
   endTestRun: jest.fn(() => {
     return Promise.resolve();
   }),
@@ -212,5 +213,20 @@ describe('reporter test', () => {
       testCaseId: '1234',
       itwTestCaseId: '4567',
     } as CreateTestCaseResultDto);
+  });
+
+  it('should filter out Test Case IDs when precreating results', async () => {
+    const mockedAutoApi = new AutoApi({
+      apiKey: '',
+      baseUrl: '',
+      productId: 0,
+    });
+    const ri = new RunInitializer(
+      mockedAutoApi,
+    );
+    await ri.initializeRun(["TestRail-123 My Test Case", "TestRail-456 My Other Test Case", "My Test Case with no case ids"])
+    expect(mockedAutoApi.startTestRun).toHaveBeenCalledWith({
+      tests: ["My Test Case", "My Other Test Case", "My Test Case with no case ids"]
+    } as TestRunCreateDto);
   });
 });
