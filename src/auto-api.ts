@@ -72,7 +72,7 @@ export class AutoApi {
     this.callsInFlight += 1;
     try {
       return await this.client.delete<void>(
-        `/api/v3.0/driver-session/${testRunId}?sessionStatus=COMPLETE`
+        `/api/v1.0/test-run/${testRunId}?endingStatus=COMPLETE`
       );
     } finally {
       this.callsInFlight -= 1;
