@@ -4,6 +4,7 @@ var axios = require('axios');
 var fs = require('fs');
 var path = require('path');
 var Validator = require('validator');
+var mailparser = require('mailparser');
 
 const API_VERSION = '1.0.0';
 
@@ -176,6 +177,26 @@ class AutoApi {
             this.callsInFlight -= 1;
         }
     }
+    async getEmailAddress(emailPrefix) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.get(`/api/v1.0/email/get-address?prefix=${emailPrefix}`);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+    async getEmailContent(request) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.post('/api/v1.0/email/download-email', request);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
 }
 
 /**
@@ -191,6 +212,32 @@ exports.TestResultStatus = void 0;
     TestResultStatus["CANCELED"] = "CANCELED";
     TestResultStatus["ERROR"] = "ERROR";
 })(exports.TestResultStatus || (exports.TestResultStatus = {}));
+
+class Inbox {
+    emailAddress;
+    autoApi;
+    constructor(emailAddress, autoApi) {
+        this.emailAddress = emailAddress;
+        this.autoApi = autoApi;
+    }
+    async getEmail() {
+        const res = await this.autoApi.getEmailContent({
+            emailAddress: this.emailAddress,
+        });
+        return await mailparser.simpleParser(res.data);
+    }
+}
+
+class EmailHelper {
+    autoApi;
+    constructor(autoApi) {
+        this.autoApi = autoApi;
+    }
+    async getInbox(emailPrefix) {
+        const generatedAddress = (await this.autoApi.getEmailAddress(emailPrefix)).data.emailAddress;
+        return new Inbox(generatedAddress, this.autoApi);
+    }
+}
 
 class TestRunHeartbeatService {
     testRunId;
@@ -386,6 +433,8 @@ function parseTestCaseName(testCaseName) {
 exports.ApplauseReporter = ApplauseReporter;
 exports.AutoApi = AutoApi;
 exports.DEFAULT_URL = DEFAULT_URL;
+exports.EmailHelper = EmailHelper;
+exports.Inbox = Inbox;
 exports.RunInitializer = RunInitializer;
 exports.RunReporter = RunReporter;
 exports.TestRunHeartbeatService = TestRunHeartbeatService;
