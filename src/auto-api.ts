@@ -2,6 +2,8 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import {
   CreateTestCaseResultDto,
   CreateTestCaseResultResponseDto,
+  EmailAddressResponse,
+  EmailFetchRequest,
   SubmitTestCaseResultDto,
   TestResultProviderInfo,
   TestRunCreateDto,
@@ -125,6 +127,35 @@ export class AutoApi {
       // this filters out falsy values (null, undefined, 0)
       return await this.client.post<void>(
         `/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async getEmailAddress(
+    emailPrefix: string
+  ): Promise<AxiosResponse<EmailAddressResponse>> {
+    this.callsInFlight += 1;
+    try {
+      // this filters out falsy values (null, undefined, 0)
+      return await this.client.get<EmailAddressResponse>(
+        `/api/v1.0/email/get-address?prefix=${emailPrefix}`
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async getEmailContent(
+    request: EmailFetchRequest
+  ): Promise<AxiosResponse<Buffer>> {
+    this.callsInFlight += 1;
+    try {
+      // this filters out falsy values (null, undefined, 0)
+      return await this.client.post<Buffer>(
+        '/api/v1.0/email/download-email',
+        request
       );
     } finally {
       this.callsInFlight -= 1;

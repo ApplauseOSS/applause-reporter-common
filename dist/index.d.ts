@@ -1,4 +1,5 @@
 import { AxiosResponse } from 'axios';
+import { ParsedMail } from 'mailparser';
 
 /**
  * Configuration of the auto-api client
@@ -82,6 +83,18 @@ interface TestRailOptions {
     addAllTestsToPlan?: boolean;
     overrideTestRailRunUniqueness?: boolean;
 }
+/**
+ * DTO containing a generated email address for testing
+ */
+interface EmailAddressResponse {
+    emailAddress: string;
+}
+/**
+ * DTO used for fetching an email from a given email address
+ */
+interface EmailFetchRequest {
+    emailAddress: string;
+}
 
 interface ApplauseConfig {
     readonly baseUrl: string;
@@ -117,6 +130,26 @@ declare class AutoApi {
     submitTestCaseResult(params: SubmitTestCaseResultDto): Promise<void>;
     getProviderSessionLinks(resultIds: number[]): Promise<AxiosResponse<TestResultProviderInfo[]>>;
     sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<void>>;
+    getEmailAddress(emailPrefix: string): Promise<AxiosResponse<EmailAddressResponse>>;
+    getEmailContent(request: EmailFetchRequest): Promise<AxiosResponse<Buffer>>;
+}
+
+declare class Inbox {
+    private emailAddress;
+    private autoApi;
+    constructor(emailAddress: string, autoApi: AutoApi);
+    getEmail(): Promise<ParsedMail>;
+}
+
+interface Attachment {
+    fileName: string;
+    context: Uint16Array;
+}
+
+declare class EmailHelper {
+    private autoApi;
+    constructor(autoApi: AutoApi);
+    getInbox(emailPrefix: string): Promise<Inbox>;
 }
 
 declare class TestRunHeartbeatService {
@@ -162,4 +195,4 @@ declare class RunReporter {
     runnerEnd(): Promise<void>;
 }
 
-export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, RunInitializer, RunReporter, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
+export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, type Attachment, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, type EmailAddressResponse, type EmailFetchRequest, EmailHelper, Inbox, RunInitializer, RunReporter, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };

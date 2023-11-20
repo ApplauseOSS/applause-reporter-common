@@ -113,3 +113,17 @@ export interface TestRailOptions {
   addAllTestsToPlan?: boolean;
   overrideTestRailRunUniqueness?: boolean;
 }
+
+/**
+ * DTO containing a generated email address for testing
+ */
+export interface EmailAddressResponse {
+  emailAddress: string;
+}
+
+/**
+ * DTO used for fetching an email from a given email address
+ */
+export interface EmailFetchRequest {
+  emailAddress: string;
+}

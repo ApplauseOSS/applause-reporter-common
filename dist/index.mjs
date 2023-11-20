@@ -2,6 +2,7 @@ import axios from 'axios';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import Validator from 'validator';
+import { simpleParser } from 'mailparser';
 
 const API_VERSION = '1.0.0';
 
@@ -174,6 +175,26 @@ class AutoApi {
             this.callsInFlight -= 1;
         }
     }
+    async getEmailAddress(emailPrefix) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.get(`/api/v1.0/email/get-address?prefix=${emailPrefix}`);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+    async getEmailContent(request) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.post('/api/v1.0/email/download-email', request);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
 }
 
 /**
@@ -189,6 +210,32 @@ var TestResultStatus;
     TestResultStatus["CANCELED"] = "CANCELED";
     TestResultStatus["ERROR"] = "ERROR";
 })(TestResultStatus || (TestResultStatus = {}));
+
+class Inbox {
+    emailAddress;
+    autoApi;
+    constructor(emailAddress, autoApi) {
+        this.emailAddress = emailAddress;
+        this.autoApi = autoApi;
+    }
+    async getEmail() {
+        const res = await this.autoApi.getEmailContent({
+            emailAddress: this.emailAddress,
+        });
+        return await simpleParser(res.data);
+    }
+}
+
+class EmailHelper {
+    autoApi;
+    constructor(autoApi) {
+        this.autoApi = autoApi;
+    }
+    async getInbox(emailPrefix) {
+        const generatedAddress = (await this.autoApi.getEmailAddress(emailPrefix)).data.emailAddress;
+        return new Inbox(generatedAddress, this.autoApi);
+    }
+}
 
 class TestRunHeartbeatService {
     testRunId;
@@ -381,5 +428,5 @@ function parseTestCaseName(testCaseName) {
     };
 }
 
-export { ApplauseReporter, AutoApi, DEFAULT_URL, RunInitializer, RunReporter, TestResultStatus, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
+export { ApplauseReporter, AutoApi, DEFAULT_URL, EmailHelper, Inbox, RunInitializer, RunReporter, TestResultStatus, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
 //# sourceMappingURL=index.mjs.map
