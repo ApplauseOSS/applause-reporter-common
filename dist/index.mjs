@@ -2,6 +2,7 @@ import axios from 'axios';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import Validator from 'validator';
+import * as queryString from 'querystring';
 import { simpleParser } from 'mailparser';
 
 const API_VERSION = '1.0.0';
@@ -169,7 +170,7 @@ class AutoApi {
         this.callsInFlight += 1;
         try {
             // this filters out falsy values (null, undefined, 0)
-            return await this.client.post(`/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`);
+            return await this.client.post('/api/v2.0/sdk-heartbeat', queryString.stringify({ testRunId: testRunId }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
         }
         finally {
             this.callsInFlight -= 1;

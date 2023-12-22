@@ -11,6 +11,7 @@ import {
 } from './dto.ts';
 import { API_VERSION } from './version.ts';
 import { ApplauseConfig, validateConfig } from './config.ts';
+import * as queryString from 'querystring';
 
 export class AutoApi {
   private readonly client: AxiosInstance;
@@ -126,7 +127,9 @@ export class AutoApi {
     try {
       // this filters out falsy values (null, undefined, 0)
       return await this.client.post<void>(
-        `/api/v2.0/sdk-heartbeat?testRunId=${testRunId}`
+        '/api/v2.0/sdk-heartbeat',
+        queryString.stringify({ testRunId: testRunId }),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
     } finally {
       this.callsInFlight -= 1;
