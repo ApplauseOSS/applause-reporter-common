@@ -4,6 +4,7 @@ import { EmailAddressResponse } from "../src/dto.ts";
 
 import { EmailHelper } from "../src/email-helper.ts";
 import { AddressObject } from "mailparser";
+import { randomUUID } from "crypto";
 
 jest.mock('../src/auto-api.ts', () => {
     return {
@@ -11,7 +12,7 @@ jest.mock('../src/auto-api.ts', () => {
         return {
             getEmailAddress: function(addr: string): Promise<{data: EmailAddressResponse }> {
                 return Promise.resolve({
-                    data: { emailAddress: addr },
+                    data: { emailAddress: addr + "@example.com" },
                     status: 200,
                     statusText: 'Ok',
                   });
@@ -36,7 +37,9 @@ describe('email tests', () => {
             apiKey: 'apiKey',
             productId: -1,
         }));
-        var inbox = await emailHelper.getInbox("email-address-prefix");
+        const uuid = randomUUID()
+        var inbox = await emailHelper.getInbox(uuid);
+        expect(inbox.emailAddress).toBe(uuid + "@example.com");
         var email = await inbox.getEmail();
         expect(email.from?.text).toBe("from@example.com");
         expect((<AddressObject> email.to)?.text).toBe("to@example.com");

@@ -3,7 +3,7 @@ import { ParsedMail, simpleParser } from 'mailparser';
 
 export class Inbox {
   constructor(
-    private emailAddress: string,
+    public readonly emailAddress: string,
     private autoApi: AutoApi
   ) {}
 
