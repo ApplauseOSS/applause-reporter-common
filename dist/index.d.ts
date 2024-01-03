@@ -135,7 +135,7 @@ declare class AutoApi {
 }
 
 declare class Inbox {
-    private emailAddress;
+    readonly emailAddress: string;
     private autoApi;
     constructor(emailAddress: string, autoApi: AutoApi);
     getEmail(): Promise<ParsedMail>;
