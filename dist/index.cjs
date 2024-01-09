@@ -123,6 +123,20 @@ class AutoApi {
             },
             responseType: 'json',
         });
+        this.client.interceptors.response.use(function (response) {
+            return response;
+        }, function (error) {
+            // log and rethrow
+            const errText = 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            error.data !== undefined
+                ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    error.data
+                : // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    `error-code [${error.response.status}] with error [${error.response.statusText}]`;
+            console.error(`Auto-Api returned ${errText}`);
+            return Promise.reject(error);
+        });
     }
     async startTestRun(info) {
         this.callsInFlight += 1;
