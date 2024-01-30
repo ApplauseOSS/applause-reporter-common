@@ -4,27 +4,7 @@ var axios = require('axios');
 var fs = require('fs');
 var path = require('path');
 var Validator = require('validator');
-var queryString = require('querystring');
 var mailparser = require('mailparser');
-
-function _interopNamespaceDefault(e) {
-    var n = Object.create(null);
-    if (e) {
-        Object.keys(e).forEach(function (k) {
-            if (k !== 'default') {
-                var d = Object.getOwnPropertyDescriptor(e, k);
-                Object.defineProperty(n, k, d.get ? d : {
-                    enumerable: true,
-                    get: function () { return e[k]; }
-                });
-            }
-        });
-    }
-    n.default = e;
-    return Object.freeze(n);
-}
-
-var queryString__namespace = /*#__PURE__*/_interopNamespaceDefault(queryString);
 
 const API_VERSION = '1.0.0';
 
@@ -205,7 +185,9 @@ class AutoApi {
         this.callsInFlight += 1;
         try {
             // this filters out falsy values (null, undefined, 0)
-            return await this.client.post('/api/v2.0/sdk-heartbeat', queryString__namespace.stringify({ testRunId: testRunId }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+            return await this.client.post('/api/v2.0/sdk-heartbeat', {
+                testRunId: testRunId,
+            });
         }
         finally {
             this.callsInFlight -= 1;
