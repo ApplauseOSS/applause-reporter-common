@@ -132,6 +132,7 @@ declare class AutoApi {
     sendSdkHeartbeat(testRunId: number): Promise<AxiosResponse<void>>;
     getEmailAddress(emailPrefix: string): Promise<AxiosResponse<EmailAddressResponse>>;
     getEmailContent(request: EmailFetchRequest): Promise<AxiosResponse<Buffer>>;
+    uploadAsset(resultId: number, file: Buffer, assetName: string, providerSessionGuid: string, assetType: string): Promise<AxiosResponse<void>>;
 }
 
 declare class Inbox {
@@ -172,10 +173,11 @@ declare class ApplauseReporter {
     private runStarted;
     private runFinished;
     constructor(config: ApplauseConfig);
-    runnerStart(tests?: string[]): void;
-    startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): void;
-    submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
+    runnerStart(tests?: string[]): Promise<number>;
+    startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): Promise<number>;
+    submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): Promise<number>;
     runnerEnd(): Promise<void>;
+    attachTestCaseAsset(id: string, assetName: string, providerSessionGuid: string, assetType: string, asset: Buffer): Promise<void>;
     isSynchronized(): boolean;
 }
 declare class RunInitializer {
@@ -185,13 +187,14 @@ declare class RunInitializer {
 }
 declare class RunReporter {
     private autoApi;
-    private testRunId;
-    private heartbeatService;
+    readonly testRunId: number;
+    private heartbeatService?;
     private uidToResultIdMap;
     private resultSubmissionMap;
-    constructor(autoApi: AutoApi, testRunId: number, heartbeatService: TestRunHeartbeatService);
-    startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): void;
-    submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
+    constructor(autoApi: AutoApi, testRunId: number, heartbeatService?: TestRunHeartbeatService | undefined);
+    startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): Promise<number>;
+    submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): Promise<number>;
+    attachTestCaseAsset(id: string, assetName: string, providerSessionGuid: string, assetType: string, asset: Buffer): Promise<any>;
     runnerEnd(): Promise<void>;
 }
 

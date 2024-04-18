@@ -19,43 +19,55 @@ export class ApplauseReporter {
   constructor(config: ApplauseConfig) {
     this.autoApi = new AutoApi(config);
     this.initializer = new RunInitializer(this.autoApi);
-  }
-
-  public runnerStart(tests?: string[]): void {
-    this.reporter = this.initializer.initializeRun(tests);
-    void this.reporter.then(() => {
+    let runId = process.env["APPLAUSE_RUN_ID"]
+    if (runId !== undefined) {
+      let r = new RunReporter(this.autoApi, parseInt(runId));
+      this.reporter = new Promise(resolve => resolve(r));
       this.runStarted = true;
-    });
+    }
   }
 
-  public startTestCase(
+  public async runnerStart(tests?: string[]): Promise<number> {
+    if (this.reporter !== undefined) {
+      throw new Error(
+        'Cannot start a run - run already started or run already finished'
+      );
+    }
+    this.reporter = this.initializer.initializeRun(tests);
+    let initializedReporter = await this.reporter;
+    this.runStarted = true;
+    process.env["APPLAUSE_RUN_ID"] = initializedReporter.testRunId.toString();
+    return initializedReporter.testRunId;
+  }
+
+  public async startTestCase(
     id: string,
     testCaseName: string,
     params?: AdditionalTestCaseParams
-  ): void {
+  ): Promise<number> {
     if (this.reporter === undefined) {
       throw new Error(
         'Cannot start a test case for a run that was never initialized'
       );
     }
-    void this.reporter.then(reporter =>
-      reporter.startTestCase(id, testCaseName, params)
-    );
+    const reporter = await this.reporter;
+    return reporter.startTestCase(id, testCaseName, params);
   }
 
-  public submitTestCaseResult(
+
+  
+  public async submitTestCaseResult(
     id: string,
     status: TestResultStatus,
     params?: AdditionalTestCaseResultParams
-  ): void {
+  ): Promise<number> {
     if (this.reporter === undefined) {
       throw new Error(
         'Cannot submit test case result for a run that was never initialized'
       );
     }
-    void this.reporter.then(reporter =>
-      reporter.submitTestCaseResult(id, status, params)
-    );
+    const reporter = await this.reporter;
+    return reporter.submitTestCaseResult(id, status, params);
   }
 
   public async runnerEnd(): Promise<void> {
@@ -65,6 +77,20 @@ export class ApplauseReporter {
     await this.reporter
       .then(reporter => reporter.runnerEnd())
       .then(() => (this.runFinished = true));
+  }
+
+  public async attachTestCaseAsset(
+    id: string,
+    assetName: string,
+    providerSessionGuid: string,
+    assetType: string,
+    asset: Buffer
+  ): Promise<void> {
+    if (this.reporter === undefined) {
+      throw new Error('Cannot attach an asset for a run that was never initialized');
+    }
+    return await this.reporter
+    .then(reporter => reporter.attachTestCaseAsset(id, assetName, providerSessionGuid, assetType, asset))
   }
 
   public isSynchronized(): boolean {
@@ -102,21 +128,21 @@ export class RunInitializer {
 
 export class RunReporter {
   private uidToResultIdMap: Record<string, Promise<number>> = {};
-  private resultSubmissionMap: Record<string, Promise<void>> = {};
+  private resultSubmissionMap: Record<string, Promise<number>> = {};
 
   constructor(
     private autoApi: AutoApi,
-    private testRunId: number,
-    private heartbeatService: TestRunHeartbeatService
+    public readonly testRunId: number,
+    private heartbeatService?: TestRunHeartbeatService
   ) {}
 
   public startTestCase(
     id: string,
     testCaseName: string,
     params?: AdditionalTestCaseParams
-  ): void {
+  ): Promise<number> {
     const parsedTestCase = parseTestCaseName(testCaseName);
-    this.uidToResultIdMap[id] = this.autoApi
+    let submission = this.autoApi
       .startTestCase({
         testCaseName: parsedTestCase.testCaseName,
         testCaseId: parsedTestCase.testRailTestCaseId,
@@ -131,20 +157,38 @@ export class RunReporter {
       .then(res => {
         return res.data.testResultId;
       });
+      this.uidToResultIdMap[id] = submission;
+      return submission;
   }
 
   public submitTestCaseResult(
     id: string,
     status: TestResultStatus,
     params?: AdditionalTestCaseResultParams
-  ): void {
-    this.resultSubmissionMap[id] = this.uidToResultIdMap[id]?.then(resultId =>
+  ): Promise<number> {
+    let submission = this.uidToResultIdMap[id]?.then(resultId =>
       this.autoApi.submitTestCaseResult({
         status: status,
         testResultId: resultId,
         ...params,
-      })
+      }).then(() => resultId)
     );
+    this.resultSubmissionMap[id] = submission;
+    return submission;
+  }
+
+  public attachTestCaseAsset(
+    id: string,
+    assetName: string,
+    providerSessionGuid: string,
+    assetType: string,
+    asset: Buffer
+  ): Promise<any> {
+    let submission = this.uidToResultIdMap[id]?.then(resultId =>
+      this.autoApi.uploadAsset(resultId,
+         asset, assetName, providerSessionGuid, assetType)
+    );
+    return submission;
   }
 
   public async runnerEnd(): Promise<void> {
@@ -156,7 +200,7 @@ export class RunReporter {
     void (await Promise.all(Object.values(this.resultSubmissionMap)));
 
     // Wait the heartbeat to be ended
-    void (await this.heartbeatService.end());
+    void (await this.heartbeatService?.end());
     void (await this.autoApi.endTestRun(this.testRunId));
 
     // Fetch the provider session asset links and save them off to a file

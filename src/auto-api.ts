@@ -178,4 +178,29 @@ export class AutoApi {
       this.callsInFlight -= 1;
     }
   }
+
+  async uploadAsset(
+    resultId: number,
+    file: Buffer,
+    assetName: string,
+    providerSessionGuid: string,
+    assetType: string
+  ): Promise<AxiosResponse<void>> {
+    this.callsInFlight += 1;
+    
+    try {
+      // this filters out falsy values (null, undefined, 0)
+      return await this.client.postForm<void>(
+        `/api/v1.0/test-result/${resultId}/upload`,
+        {
+          file,
+          assetName,
+          providerSessionGuid,
+          assetType
+        }
+      );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
 }

@@ -213,6 +213,21 @@ class AutoApi {
             this.callsInFlight -= 1;
         }
     }
+    async uploadAsset(resultId, file, assetName, providerSessionGuid, assetType) {
+        this.callsInFlight += 1;
+        try {
+            // this filters out falsy values (null, undefined, 0)
+            return await this.client.postForm(`/api/v1.0/test-result/${resultId}/upload`, {
+                file,
+                assetName,
+                providerSessionGuid,
+                assetType
+            });
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
 }
 
 /**
@@ -306,24 +321,36 @@ class ApplauseReporter {
     constructor(config) {
         this.autoApi = new AutoApi(config);
         this.initializer = new RunInitializer(this.autoApi);
-    }
-    runnerStart(tests) {
-        this.reporter = this.initializer.initializeRun(tests);
-        void this.reporter.then(() => {
+        let runId = process.env["APPLAUSE_RUN_ID"];
+        if (runId !== undefined) {
+            let r = new RunReporter(this.autoApi, parseInt(runId));
+            this.reporter = new Promise(resolve => resolve(r));
             this.runStarted = true;
-        });
+        }
     }
-    startTestCase(id, testCaseName, params) {
+    async runnerStart(tests) {
+        if (this.reporter !== undefined) {
+            throw new Error('Cannot start a run - run already started or run already finished');
+        }
+        this.reporter = this.initializer.initializeRun(tests);
+        let initializedReporter = await this.reporter;
+        this.runStarted = true;
+        process.env["APPLAUSE_RUN_ID"] = initializedReporter.testRunId.toString();
+        return initializedReporter.testRunId;
+    }
+    async startTestCase(id, testCaseName, params) {
         if (this.reporter === undefined) {
             throw new Error('Cannot start a test case for a run that was never initialized');
         }
-        void this.reporter.then(reporter => reporter.startTestCase(id, testCaseName, params));
+        const reporter = await this.reporter;
+        return reporter.startTestCase(id, testCaseName, params);
     }
-    submitTestCaseResult(id, status, params) {
+    async submitTestCaseResult(id, status, params) {
         if (this.reporter === undefined) {
             throw new Error('Cannot submit test case result for a run that was never initialized');
         }
-        void this.reporter.then(reporter => reporter.submitTestCaseResult(id, status, params));
+        const reporter = await this.reporter;
+        return reporter.submitTestCaseResult(id, status, params);
     }
     async runnerEnd() {
         if (this.reporter === undefined) {
@@ -332,6 +359,13 @@ class ApplauseReporter {
         await this.reporter
             .then(reporter => reporter.runnerEnd())
             .then(() => (this.runFinished = true));
+    }
+    async attachTestCaseAsset(id, assetName, providerSessionGuid, assetType, asset) {
+        if (this.reporter === undefined) {
+            throw new Error('Cannot attach an asset for a run that was never initialized');
+        }
+        return await this.reporter
+            .then(reporter => reporter.attachTestCaseAsset(id, assetName, providerSessionGuid, assetType, asset));
     }
     isSynchronized() {
         // Verify the run is not yet started or it has ended, and all calls made to the applause api have finished
@@ -375,7 +409,7 @@ class RunReporter {
     }
     startTestCase(id, testCaseName, params) {
         const parsedTestCase = parseTestCaseName(testCaseName);
-        this.uidToResultIdMap[id] = this.autoApi
+        let submission = this.autoApi
             .startTestCase({
             testCaseName: parsedTestCase.testCaseName,
             testCaseId: parsedTestCase.testRailTestCaseId,
@@ -387,13 +421,21 @@ class RunReporter {
             .then(res => {
             return res.data.testResultId;
         });
+        this.uidToResultIdMap[id] = submission;
+        return submission;
     }
     submitTestCaseResult(id, status, params) {
-        this.resultSubmissionMap[id] = this.uidToResultIdMap[id]?.then(resultId => this.autoApi.submitTestCaseResult({
+        let submission = this.uidToResultIdMap[id]?.then(resultId => this.autoApi.submitTestCaseResult({
             status: status,
             testResultId: resultId,
             ...params,
-        }));
+        }).then(() => resultId));
+        this.resultSubmissionMap[id] = submission;
+        return submission;
+    }
+    attachTestCaseAsset(id, assetName, providerSessionGuid, assetType, asset) {
+        let submission = this.uidToResultIdMap[id]?.then(resultId => this.autoApi.uploadAsset(resultId, asset, assetName, providerSessionGuid, assetType));
+        return submission;
     }
     async runnerEnd() {
         // Wait for all results to be created
@@ -401,7 +443,7 @@ class RunReporter {
         // Wait for the results to be submitted
         void (await Promise.all(Object.values(this.resultSubmissionMap)));
         // Wait the heartbeat to be ended
-        void (await this.heartbeatService.end());
+        void (await this.heartbeatService?.end());
         void (await this.autoApi.endTestRun(this.testRunId));
         // Fetch the provider session asset links and save them off to a file
         const resp = await this.autoApi.getProviderSessionLinks(resultIds);
