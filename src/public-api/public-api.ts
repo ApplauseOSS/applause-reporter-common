@@ -1,14 +1,17 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { TestRunAutoResultDto } from './dto.ts';
 import {
   PublicApiConfig,
   validatePublicApiConfig,
 } from './public-api-config.ts';
+import * as winston from 'winston';
+import { constructDefaultLogger } from '../shared/logging.ts';
 
 export class PublicApi {
   private readonly client: AxiosInstance;
 
   private callsInFlight: number;
+  private logger: winston.Logger;
   /**
    * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
    */
@@ -16,8 +19,12 @@ export class PublicApi {
     return this.callsInFlight;
   }
 
-  constructor(readonly options: PublicApiConfig) {
+  constructor(
+    readonly options: PublicApiConfig,
+    logger?: winston.Logger
+  ) {
     this.callsInFlight = 0;
+    this.logger = logger ?? constructDefaultLogger();
     validatePublicApiConfig(options);
     this.client = axios.create({
       baseURL: options.publicApiBaseUrl,
@@ -32,16 +39,14 @@ export class PublicApi {
       function (response: AxiosResponse<any, any>) {
         return response;
       },
-      function (error) {
+      (error: AxiosError) => {
         // log and rethrow
         const errText =
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.data !== undefined
-            ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              error.data
-            : // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              `error-code [${error.response.status}] with error [${error.response.statusText}]`;
-        console.error(`Public-Api returned ${errText}`);
+          error.response?.data !== undefined
+            ? JSON.stringify(error.response.data)
+            : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;
+        this.logger.error(`Public-Api returned ${errText}`);
         return Promise.reject(error);
       }
     );
