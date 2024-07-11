@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "1.1.0",
   "name": "applause-reporter-common",
   "umd:name": "applause-reporter-common",
   "repository": "https://github.com/ApplauseOSS/applause-reporter-common",
@@ -64,8 +64,11 @@
   },
   "dependencies": {
     "axios": "^1.6.0",
+    "logform": "^2.6.0",
     "mailparser": "^3.6.5",
     "validator": "^13.11.0",
+    "winston": "^3.13.0",
+    "winston-transport": "^4.7.0",
     "yarn": "^1.22.19"
   }
 }
