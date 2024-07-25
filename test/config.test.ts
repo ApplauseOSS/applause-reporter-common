@@ -1,4 +1,5 @@
-import { DEFAULT_URL, loadConfig } from '../src/config.ts';
+import { DEFAULT_URL } from '../src/auto-api/auto-api-config.ts';
+import { loadConfig } from '../src/config/config.ts';
 
 describe('config loader', () => {
   it('should load the config and use the default url', () => {
@@ -6,7 +7,7 @@ describe('config loader', () => {
       configFile: './test/resources/applause.json',
     });
 
-    expect(config.baseUrl).toBe(DEFAULT_URL);
+    expect(config.autoApiBaseUrl).toBe(DEFAULT_URL);
     expect(config.apiKey).toBe('fakeKey');
     expect(config.productId).toBe(1);
     expect(config.applauseTestCycleId).toBeUndefined();
@@ -18,7 +19,7 @@ describe('config loader', () => {
       configFile: './test/resources/applause-with-url.json',
     });
 
-    expect(config.baseUrl).toBe('http://localhost:8080');
+    expect(config.autoApiBaseUrl).toBe('http://localhost:8080');
     expect(config.apiKey).toBe('fakeKey');
     expect(config.productId).toBe(1);
     expect(config.applauseTestCycleId).toBeUndefined();
@@ -29,11 +30,11 @@ describe('config loader', () => {
     const config = loadConfig({
       configFile: './test/resources/applause-with-url.json',
       properties: {
-        baseUrl: 'http://overwritten.com',
+        autoApiBaseUrl: 'http://overwritten.com',
       },
     });
 
-    expect(config.baseUrl).toBe('http://overwritten.com');
+    expect(config.autoApiBaseUrl).toBe('http://overwritten.com');
     expect(config.apiKey).toBe('fakeKey');
     expect(config.productId).toBe(1);
     expect(config.applauseTestCycleId).toBeUndefined();
@@ -45,7 +46,7 @@ describe('config loader', () => {
       loadConfig({
         configFile: './test/resources/bad-url-applause.json',
       })
-    ).toThrowError('baseUrl is not valid HTTP/HTTPS URL, was: notAUrl');
+    ).toThrowError('autoApiBaseUrl is not valid HTTP/HTTPS URL, was: notAUrl');
   });
 
   it('should fail for an invalid productId', () => {
@@ -70,13 +71,13 @@ describe('config loader', () => {
       properties: {
         apiKey: undefined,
         applauseTestCycleId: undefined,
-        baseUrl: undefined,
+        autoApiBaseUrl: undefined,
         productId: undefined,
         testRailOptions: undefined,
       },
     });
 
-    expect(config.baseUrl).toBe('http://localhost:8080');
+    expect(config.autoApiBaseUrl).toBe('http://localhost:8080');
     expect(config.apiKey).toBe('fakeKey');
     expect(config.productId).toBe(1);
     expect(config.applauseTestCycleId).toBeUndefined();

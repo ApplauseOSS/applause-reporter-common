@@ -96,34 +96,23 @@ interface EmailFetchRequest {
     emailAddress: string;
 }
 
-interface ApplauseConfig {
-    readonly baseUrl: string;
+interface AutoApiConfig {
+    readonly autoApiBaseUrl: string;
     readonly apiKey: string;
     readonly productId: number;
     readonly testRailOptions?: TestRailOptions;
     readonly applauseTestCycleId?: number;
 }
-declare const DEFAULT_URL = "https://prod-auto-api.cloud.applause.com/";
-interface ConfigLoadProperties {
-    configFile?: string;
-    properties?: Partial<ApplauseConfig>;
-}
-declare function loadConfig(loadOptions?: ConfigLoadProperties): ApplauseConfig;
-declare function overrideConfig(config: Partial<ApplauseConfig>, overrides?: Partial<ApplauseConfig>): Partial<ApplauseConfig>;
-declare function isComplete(config: Partial<ApplauseConfig>): boolean;
-declare function loadConfigFromFile(configFile?: string): Partial<ApplauseConfig>;
-declare function validateConfig(config: ApplauseConfig): void;
-declare function validatePartialConfig(config: Partial<ApplauseConfig>): void;
 
 declare class AutoApi {
-    readonly options: ApplauseConfig;
+    readonly options: AutoApiConfig;
     private readonly client;
     private callsInFlight;
     /**
      * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
      */
     get getCallsInFlight(): number;
-    constructor(options: ApplauseConfig);
+    constructor(options: AutoApiConfig);
     startTestRun(info: TestRunCreateDto): Promise<AxiosResponse<TestRunCreateResponseDto>>;
     endTestRun(testRunId: number): Promise<AxiosResponse<void>>;
     startTestCase(params: CreateTestCaseResultDto): Promise<AxiosResponse<CreateTestCaseResultResponseDto>>;
@@ -171,7 +160,7 @@ declare class ApplauseReporter {
     private reporter?;
     private runStarted;
     private runFinished;
-    constructor(config: ApplauseConfig);
+    constructor(config: AutoApiConfig);
     runnerStart(tests?: string[]): void;
     startTestCase(id: string, testCaseName: string, params?: AdditionalTestCaseParams): void;
     submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
@@ -194,5 +183,60 @@ declare class RunReporter {
     submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
     runnerEnd(): Promise<void>;
 }
+declare const TEST_RAIL_CASE_ID_PREFIX: string;
+declare const APPLAUSE_CASE_ID_PREFIX: string;
+declare function parseTestCaseName(testCaseName: string): ParsedTestCaseName;
+interface ParsedTestCaseName {
+    testCaseName: string;
+    testRailTestCaseId?: string;
+    applauseTestCaseId?: string;
+}
 
-export { type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, type Attachment, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, DEFAULT_URL, type EmailAddressResponse, type EmailFetchRequest, EmailHelper, Inbox, RunInitializer, RunReporter, type SubmitTestCaseResultDto, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, validateConfig, validatePartialConfig };
+interface TestRunAutoResultDto {
+    testCycleId: number;
+    status: TestRunAutoResultStatus;
+    failureReason?: string;
+    sessionDetailsJson?: object;
+    startTime?: Date;
+    endTime?: Date;
+}
+declare enum TestRunAutoResultStatus {
+    PASSED = "PASSED",
+    FAILED = "FAILED",
+    SKIPPED = "SKIPPED",
+    CANCELED = "CANCELED",
+    ERROR = "ERROR"
+}
+
+interface PublicApiConfig {
+    readonly publicApiBaseUrl: string;
+    readonly apiKey: string;
+    readonly productId: number;
+    readonly applauseTestCycleId?: number;
+}
+
+declare class PublicApi {
+    readonly options: PublicApiConfig;
+    private readonly client;
+    private callsInFlight;
+    /**
+     * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
+     */
+    get getCallsInFlight(): number;
+    constructor(options: PublicApiConfig);
+    submitResult(testCaseId: number, info: TestRunAutoResultDto): Promise<AxiosResponse<void>>;
+}
+
+type ApplauseConfig = AutoApiConfig & PublicApiConfig;
+interface ConfigLoadProperties {
+    configFile?: string;
+    properties?: Partial<ApplauseConfig>;
+}
+declare function loadConfig(loadOptions?: ConfigLoadProperties): ApplauseConfig;
+declare function overrideConfig(config: Partial<ApplauseConfig>, overrides?: Partial<ApplauseConfig>): Partial<ApplauseConfig>;
+declare function isComplete(config: Partial<ApplauseConfig>): boolean;
+declare function loadConfigFromFile(configFile?: string): Partial<ApplauseConfig>;
+declare function validateConfig(config: ApplauseConfig): void;
+declare function validatePartialConfig(config: Partial<ApplauseConfig>): void;
+
+export { APPLAUSE_CASE_ID_PREFIX, type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, type Attachment, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, type EmailAddressResponse, type EmailFetchRequest, EmailHelper, Inbox, PublicApi, RunInitializer, RunReporter, type SubmitTestCaseResultDto, TEST_RAIL_CASE_ID_PREFIX, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunAutoResultDto, TestRunAutoResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, parseTestCaseName, validateConfig, validatePartialConfig };

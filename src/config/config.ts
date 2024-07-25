@@ -1,19 +1,20 @@
 import { existsSync, readFileSync } from 'fs';
-import { TestRailOptions } from './dto.ts';
 import path from 'path';
 
-import Validator from 'validator';
-const validator = Validator.default;
+import {
+  AutoApiConfig,
+  DEFAULT_AUTO_API_PROPERTIES,
+  isAutoApiConfigComplete,
+  validateAutoApiConfig,
+} from '../auto-api/auto-api-config.ts';
+import {
+  DEFAULT_PUBLIC_API_PROPERTIES,
+  isPublicApiConfigComplete,
+  PublicApiConfig,
+  validatePublicApiConfig,
+} from '../public-api/public-api-config.ts';
 
-export interface ApplauseConfig {
-  readonly baseUrl: string;
-  readonly apiKey: string;
-  readonly productId: number;
-  readonly testRailOptions?: TestRailOptions;
-  readonly applauseTestCycleId?: number;
-}
-
-export const DEFAULT_URL = 'https://prod-auto-api.cloud.applause.com/';
+export type ApplauseConfig = AutoApiConfig & PublicApiConfig;
 
 export interface ConfigLoadProperties {
   configFile?: string;
@@ -24,7 +25,8 @@ export interface ConfigLoadProperties {
 export function loadConfig(loadOptions?: ConfigLoadProperties): ApplauseConfig {
   // Setup the initial config with any default properties
   let config: Partial<ApplauseConfig> = {
-    baseUrl: DEFAULT_URL,
+    ...DEFAULT_PUBLIC_API_PROPERTIES,
+    ...DEFAULT_AUTO_API_PROPERTIES,
   };
 
   // Load properties from the provided config file
@@ -69,11 +71,7 @@ export function overrideConfig(
 }
 
 export function isComplete(config: Partial<ApplauseConfig>): boolean {
-  return (
-    config.baseUrl !== undefined &&
-    config.apiKey !== undefined &&
-    config.productId !== undefined
-  );
+  return isAutoApiConfigComplete(config) && isPublicApiConfigComplete(config);
 }
 
 export function loadConfigFromFile(
@@ -88,32 +86,8 @@ export function loadConfigFromFile(
 }
 
 export function validateConfig(config: ApplauseConfig) {
-  if (!Number.isInteger(config.productId) || config.productId <= 0) {
-    throw new Error(
-      `productId must be a positive integer, was: '${config.productId}'`
-    );
-  }
-  if (
-    !validator.isURL(config.baseUrl, {
-      protocols: ['http', 'https'],
-      require_tld: false, // allow localhost
-      allow_query_components: false,
-      disallow_auth: true,
-      allow_fragments: false,
-      allow_protocol_relative_urls: false,
-      allow_trailing_dot: false,
-      require_host: true,
-      require_protocol: true,
-    })
-  ) {
-    throw new Error(
-      `baseUrl is not valid HTTP/HTTPS URL, was: ${config.baseUrl}`
-    );
-  }
-
-  if (validator.isEmpty(config.apiKey)) {
-    throw new Error('apiKey is an empty string!');
-  }
+  validateAutoApiConfig(config);
+  validatePublicApiConfig(config);
 }
 
 export function validatePartialConfig(config: Partial<ApplauseConfig>) {
