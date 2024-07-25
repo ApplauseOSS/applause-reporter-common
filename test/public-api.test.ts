@@ -1,19 +1,20 @@
-import { AutoApi } from '../src/auto-api/auto-api.ts';
+import { PublicApi } from '../src/index.ts';
 
 jest.setTimeout(400_000);
+
 test('should create the thing', () => {
-  const autoApi = new AutoApi({
-    autoApiBaseUrl: 'http://www.example.com',
+  const publicAPI = new PublicApi({
+    publicApiBaseUrl: 'http://www.example.com',
     apiKey: 'apiKey',
     productId: 1,
   });
-  expect(autoApi).not.toBeUndefined();
+  expect(publicAPI).not.toBeUndefined();
 });
 
 test('providing bogus productId should throw an exception', () => {
   const test = () => {
-    new AutoApi({
-      autoApiBaseUrl: 'http://www.example.com',
+    new PublicApi({
+      publicApiBaseUrl: 'http://www.example.com',
       apiKey: 'apiKey',
       productId: -1,
     });

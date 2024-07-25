@@ -1,5 +1,5 @@
 {
     "apiKey": "fakeKey",
-    "baseUrl": "notAUrl",
+    "autoApiBaseUrl": "notAUrl",
     "productId": 1
 }

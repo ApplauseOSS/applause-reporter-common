@@ -7,7 +7,7 @@ import {
 } from './dto.ts';
 import { TestRunHeartbeatService } from './heartbeat.ts';
 import { join as pathJoin } from 'path';
-import { ApplauseConfig } from './config.ts';
+import { AutoApiConfig } from './auto-api-config.ts';
 
 export class ApplauseReporter {
   private autoApi: AutoApi;
@@ -16,7 +16,7 @@ export class ApplauseReporter {
   private runStarted: boolean = false;
   private runFinished: boolean = false;
 
-  constructor(config: ApplauseConfig) {
+  constructor(config: AutoApiConfig) {
     this.autoApi = new AutoApi(config);
     this.initializer = new RunInitializer(this.autoApi);
   }
@@ -173,10 +173,10 @@ export class RunReporter {
     }
   }
 }
-const TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
-const APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
+export const TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
+export const APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
 
-function parseTestCaseName(testCaseName: string): ParsedTestCaseName {
+export function parseTestCaseName(testCaseName: string): ParsedTestCaseName {
   // Split the name on spaces. We will reassemble after parsing out the other ids
   const tokens = testCaseName.split(' ');
   let testRailTestCaseId: string | undefined;

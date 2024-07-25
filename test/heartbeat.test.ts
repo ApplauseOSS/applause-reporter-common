@@ -1,12 +1,12 @@
-import { AutoApi } from '../src/auto-api.ts';
+import { AutoApi } from '../src/auto-api/auto-api.ts';
 import {
   TestResultProviderInfo,
   TestRunCreateResponseDto,
-} from '../src/dto.ts';
-import { TestRunHeartbeatService } from '../src/heartbeat.ts';
+} from '../src/auto-api/dto.ts';
+import { TestRunHeartbeatService } from '../src/auto-api/heartbeat.ts';
 
 jest.useFakeTimers();
-jest.mock('../src/auto-api.ts', () => {
+jest.mock('../src/auto-api/auto-api.ts', () => {
   return {
     AutoApi: jest.fn().mockImplementation(() => {
       return {
@@ -45,7 +45,7 @@ async function waitForNextHeartbeat() {
 }
 const autoApi = new AutoApi({
   apiKey: 'apiKey',
-  baseUrl: 'http://localhost',
+  autoApiBaseUrl: 'http://localhost',
   productId: 1,
 });
 const heartbeatCommandSpy = jest.spyOn(autoApi, 'sendSdkHeartbeat');
