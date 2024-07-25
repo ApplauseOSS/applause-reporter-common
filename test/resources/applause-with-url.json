@@ -1,5 +1,5 @@
 {
     "apiKey": "fakeKey",
-    "baseUrl": "http://localhost:8080",
+    "autoApiBaseUrl": "http://localhost:8080",
     "productId": 1
 }

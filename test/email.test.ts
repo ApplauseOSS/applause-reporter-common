@@ -1,12 +1,12 @@
 import { readFileSync } from "fs";
-import { AutoApi } from "../src/auto-api.ts";
-import { EmailAddressResponse } from "../src/dto.ts";
+import { AutoApi } from "../src/auto-api/auto-api.ts";
+import { EmailAddressResponse } from "../src/auto-api/dto.ts";
 
-import { EmailHelper } from "../src/email-helper.ts";
+import { EmailHelper } from "../src/auto-api/email-helper.ts";
 import { AddressObject } from "mailparser";
 import { randomUUID } from "crypto";
 
-jest.mock('../src/auto-api.ts', () => {
+jest.mock('../src/auto-api/auto-api.ts', () => {
     return {
       AutoApi: jest.fn().mockImplementation(() => {
         return {
@@ -33,7 +33,7 @@ describe('email tests', () => {
 
     it('should parse the email correctly', async () => {
         var emailHelper = new EmailHelper(new AutoApi({      
-            baseUrl: 'http://example.com',
+            autoApiBaseUrl: 'http://example.com',
             apiKey: 'apiKey',
             productId: -1,
         }));

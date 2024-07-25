@@ -10,7 +10,7 @@ import {
   TestRunCreateResponseDto,
 } from './dto.ts';
 import { API_VERSION } from './version.ts';
-import { ApplauseConfig, validateConfig } from './config.ts';
+import { AutoApiConfig, validateAutoApiConfig } from './auto-api-config.ts';
 
 export class AutoApi {
   private readonly client: AxiosInstance;
@@ -23,11 +23,11 @@ export class AutoApi {
     return this.callsInFlight;
   }
 
-  constructor(readonly options: ApplauseConfig) {
+  constructor(readonly options: AutoApiConfig) {
     this.callsInFlight = 0;
-    validateConfig(options);
+    validateAutoApiConfig(options);
     this.client = axios.create({
-      baseURL: options.baseUrl,
+      baseURL: options.autoApiBaseUrl,
       timeout: 10000,
       headers: {
         'X-Api-Key': options.apiKey,

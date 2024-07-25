@@ -1,62 +1,28 @@
 'use strict';
 
 var axios = require('axios');
-var fs = require('fs');
-var path = require('path');
 var Validator = require('validator');
 var mailparser = require('mailparser');
+var fs = require('fs');
+var path = require('path');
 
 const API_VERSION = '1.0.0';
 
-const validator = Validator.default;
-const DEFAULT_URL = 'https://prod-auto-api.cloud.applause.com/';
-// Loads the configuration
-function loadConfig(loadOptions) {
-    // Setup the initial config with any default properties
-    let config = {
-        baseUrl: DEFAULT_URL,
-    };
-    // Load properties from the provided config file
-    if (loadOptions !== undefined && loadOptions.configFile !== undefined) {
-        config = overrideConfig(config, loadConfigFromFile(path.join(process.cwd(), loadOptions.configFile)));
-    }
-    else {
-        // Override from the default config file
-        config = overrideConfig(config, loadConfigFromFile());
-    }
-    // Then load in the file override properties
-    if (loadOptions !== undefined && loadOptions.properties !== undefined) {
-        config = overrideConfig(config, loadOptions.properties);
-    }
-    if (!isComplete(config)) {
-        throw new Error('Config is not complete');
-    }
-    // We know that the config is complete, so we can cast
-    const finalConfig = config;
-    validateConfig(finalConfig);
-    return finalConfig;
-}
-function overrideConfig(config, overrides) {
-    return Object.assign({}, config, Object.fromEntries(Object.entries(overrides || {}).filter(([_, v]) => v !== undefined)));
-}
-function isComplete(config) {
-    return (config.baseUrl !== undefined &&
+const validator$1 = Validator.default;
+const DEFAULT_URL$1 = 'https://prod-auto-api.cloud.applause.com/';
+const DEFAULT_AUTO_API_PROPERTIES = {
+    autoApiBaseUrl: DEFAULT_URL$1,
+};
+function isAutoApiConfigComplete(config) {
+    return (config.autoApiBaseUrl !== undefined &&
         config.apiKey !== undefined &&
         config.productId !== undefined);
 }
-function loadConfigFromFile(configFile) {
-    const configFilePath = configFile || process.cwd() + '/applause.json';
-    if (!fs.existsSync(configFilePath)) {
-        return {};
-    }
-    const fileCotents = fs.readFileSync(configFilePath, 'utf8');
-    return JSON.parse(fileCotents);
-}
-function validateConfig(config) {
+function validateAutoApiConfig(config) {
     if (!Number.isInteger(config.productId) || config.productId <= 0) {
         throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
     }
-    if (!validator.isURL(config.baseUrl, {
+    if (!validator$1.isURL(config.autoApiBaseUrl, {
         protocols: ['http', 'https'],
         require_tld: false,
         allow_query_components: false,
@@ -67,16 +33,10 @@ function validateConfig(config) {
         require_host: true,
         require_protocol: true,
     })) {
-        throw new Error(`baseUrl is not valid HTTP/HTTPS URL, was: ${config.baseUrl}`);
+        throw new Error(`autoApiBaseUrl is not valid HTTP/HTTPS URL, was: ${config.autoApiBaseUrl}`);
     }
-    if (validator.isEmpty(config.apiKey)) {
+    if (validator$1.isEmpty(config.apiKey)) {
         throw new Error('apiKey is an empty string!');
-    }
-}
-function validatePartialConfig(config) {
-    if (config.productId !== undefined &&
-        (!Number.isInteger(config.productId) || config.productId <= 0)) {
-        throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
     }
 }
 
@@ -93,9 +53,9 @@ class AutoApi {
     constructor(options) {
         this.options = options;
         this.callsInFlight = 0;
-        validateConfig(options);
+        validateAutoApiConfig(options);
         this.client = axios.create({
-            baseURL: options.baseUrl,
+            baseURL: options.autoApiBaseUrl,
             timeout: 10000,
             headers: {
                 'X-Api-Key': options.apiKey,
@@ -446,18 +406,163 @@ function parseTestCaseName(testCaseName) {
     };
 }
 
+exports.TestRunAutoResultStatus = void 0;
+(function (TestRunAutoResultStatus) {
+    TestRunAutoResultStatus["PASSED"] = "PASSED";
+    TestRunAutoResultStatus["FAILED"] = "FAILED";
+    TestRunAutoResultStatus["SKIPPED"] = "SKIPPED";
+    TestRunAutoResultStatus["CANCELED"] = "CANCELED";
+    TestRunAutoResultStatus["ERROR"] = "ERROR";
+})(exports.TestRunAutoResultStatus || (exports.TestRunAutoResultStatus = {}));
+
+const validator = Validator.default;
+const DEFAULT_URL = 'https://api.applause.com/';
+const DEFAULT_PUBLIC_API_PROPERTIES = {
+    publicApiBaseUrl: DEFAULT_URL,
+};
+function isPublicApiConfigComplete(config) {
+    return (config.publicApiBaseUrl !== undefined &&
+        config.apiKey !== undefined &&
+        config.productId !== undefined);
+}
+function validatePublicApiConfig(config) {
+    if (!Number.isInteger(config.productId) || config.productId <= 0) {
+        throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
+    }
+    if (!validator.isURL(config.publicApiBaseUrl, {
+        protocols: ['http', 'https'],
+        require_tld: false,
+        allow_query_components: false,
+        disallow_auth: true,
+        allow_fragments: false,
+        allow_protocol_relative_urls: false,
+        allow_trailing_dot: false,
+        require_host: true,
+        require_protocol: true,
+    })) {
+        throw new Error(`publicApiBaseUrl is not valid HTTP/HTTPS URL, was: ${config.publicApiBaseUrl}`);
+    }
+    if (validator.isEmpty(config.apiKey)) {
+        throw new Error('apiKey is an empty string!');
+    }
+}
+
+class PublicApi {
+    options;
+    client;
+    callsInFlight;
+    /**
+     * tracks number of HTTP calls in progress, used by reporters that want to know when our async work is finished
+     */
+    get getCallsInFlight() {
+        return this.callsInFlight;
+    }
+    constructor(options) {
+        this.options = options;
+        this.callsInFlight = 0;
+        validatePublicApiConfig(options);
+        this.client = axios.create({
+            baseURL: options.publicApiBaseUrl,
+            timeout: 10000,
+            headers: {
+                'X-Api-Key': options.apiKey,
+                'Context-Type': 'application/json',
+            },
+            responseType: 'json',
+        });
+        this.client.interceptors.response.use(function (response) {
+            return response;
+        }, function (error) {
+            // log and rethrow
+            const errText = 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            error.data !== undefined
+                ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    error.data
+                : // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    `error-code [${error.response.status}] with error [${error.response.statusText}]`;
+            console.error(`Public-Api returned ${errText}`);
+            return Promise.reject(error);
+        });
+    }
+    async submitResult(testCaseId, info) {
+        this.callsInFlight += 1;
+        try {
+            return await this.client.post(`v2/test-case-results/${testCaseId}/submit`, info);
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
+}
+
+// Loads the configuration
+function loadConfig(loadOptions) {
+    // Setup the initial config with any default properties
+    let config = {
+        ...DEFAULT_PUBLIC_API_PROPERTIES,
+        ...DEFAULT_AUTO_API_PROPERTIES,
+    };
+    // Load properties from the provided config file
+    if (loadOptions !== undefined && loadOptions.configFile !== undefined) {
+        config = overrideConfig(config, loadConfigFromFile(path.join(process.cwd(), loadOptions.configFile)));
+    }
+    else {
+        // Override from the default config file
+        config = overrideConfig(config, loadConfigFromFile());
+    }
+    // Then load in the file override properties
+    if (loadOptions !== undefined && loadOptions.properties !== undefined) {
+        config = overrideConfig(config, loadOptions.properties);
+    }
+    if (!isComplete(config)) {
+        throw new Error('Config is not complete');
+    }
+    // We know that the config is complete, so we can cast
+    const finalConfig = config;
+    validateConfig(finalConfig);
+    return finalConfig;
+}
+function overrideConfig(config, overrides) {
+    return Object.assign({}, config, Object.fromEntries(Object.entries(overrides || {}).filter(([_, v]) => v !== undefined)));
+}
+function isComplete(config) {
+    return isAutoApiConfigComplete(config) && isPublicApiConfigComplete(config);
+}
+function loadConfigFromFile(configFile) {
+    const configFilePath = configFile || process.cwd() + '/applause.json';
+    if (!fs.existsSync(configFilePath)) {
+        return {};
+    }
+    const fileCotents = fs.readFileSync(configFilePath, 'utf8');
+    return JSON.parse(fileCotents);
+}
+function validateConfig(config) {
+    validateAutoApiConfig(config);
+    validatePublicApiConfig(config);
+}
+function validatePartialConfig(config) {
+    if (config.productId !== undefined &&
+        (!Number.isInteger(config.productId) || config.productId <= 0)) {
+        throw new Error(`productId must be a positive integer, was: '${config.productId}'`);
+    }
+}
+
+exports.APPLAUSE_CASE_ID_PREFIX = APPLAUSE_CASE_ID_PREFIX;
 exports.ApplauseReporter = ApplauseReporter;
 exports.AutoApi = AutoApi;
-exports.DEFAULT_URL = DEFAULT_URL;
 exports.EmailHelper = EmailHelper;
 exports.Inbox = Inbox;
+exports.PublicApi = PublicApi;
 exports.RunInitializer = RunInitializer;
 exports.RunReporter = RunReporter;
+exports.TEST_RAIL_CASE_ID_PREFIX = TEST_RAIL_CASE_ID_PREFIX;
 exports.TestRunHeartbeatService = TestRunHeartbeatService;
 exports.isComplete = isComplete;
 exports.loadConfig = loadConfig;
 exports.loadConfigFromFile = loadConfigFromFile;
 exports.overrideConfig = overrideConfig;
+exports.parseTestCaseName = parseTestCaseName;
 exports.validateConfig = validateConfig;
 exports.validatePartialConfig = validatePartialConfig;
 //# sourceMappingURL=index.cjs.map
