@@ -8,6 +8,7 @@ import {
 import { TestRunHeartbeatService } from './heartbeat.ts';
 import { join as pathJoin } from 'path';
 import { AutoApiConfig } from './auto-api-config.ts';
+import { parseTestCaseName } from '../shared/test-case.ts';
 
 export class ApplauseReporter {
   private autoApi: AutoApi;
@@ -172,47 +173,4 @@ export class RunReporter {
       );
     }
   }
-}
-export const TEST_RAIL_CASE_ID_PREFIX: string = 'TestRail-';
-export const APPLAUSE_CASE_ID_PREFIX: string = 'Applause-';
-
-export function parseTestCaseName(testCaseName: string): ParsedTestCaseName {
-  // Split the name on spaces. We will reassemble after parsing out the other ids
-  const tokens = testCaseName.split(' ');
-  let testRailTestCaseId: string | undefined;
-  let applauseTestCaseId: string | undefined;
-  tokens.forEach(token => {
-    if (token?.startsWith(TEST_RAIL_CASE_ID_PREFIX)) {
-      if (testRailTestCaseId !== undefined) {
-        console.warn('Multiple TestRail case ids detected in testCase name');
-      }
-      testRailTestCaseId = token.substring(TEST_RAIL_CASE_ID_PREFIX.length);
-    } else if (token?.startsWith(APPLAUSE_CASE_ID_PREFIX)) {
-      if (applauseTestCaseId !== undefined) {
-        console.warn('Multiple Applause case ids detected in testCase name');
-      }
-      applauseTestCaseId = token.substring(APPLAUSE_CASE_ID_PREFIX.length);
-    }
-  });
-  return {
-    applauseTestCaseId,
-    testRailTestCaseId,
-    testCaseName: tokens
-      .filter(
-        token =>
-          token !== `${TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`
-      )
-      .filter(
-        token =>
-          token !== `${APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`
-      )
-      .join(' ')
-      .trim(),
-  };
-}
-
-interface ParsedTestCaseName {
-  testCaseName: string;
-  testRailTestCaseId?: string;
-  applauseTestCaseId?: string;
 }
