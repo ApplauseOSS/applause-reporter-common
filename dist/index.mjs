@@ -255,6 +255,32 @@ class TestRunHeartbeatService {
     }
 }
 
+const TEST_RAIL_CASE_ID_PREFIX = 'TestRail-';
+const APPLAUSE_CASE_ID_PREFIX = 'Applause-';
+function parseTestCaseName(testCaseName) {
+    const matches = testCaseName.match(/(TestRail-\d+|Applause-\d+)/g);
+    const testRailCaseIds = matches
+        ?.filter(match => match.startsWith(TEST_RAIL_CASE_ID_PREFIX))
+        .map(match => match.substring(TEST_RAIL_CASE_ID_PREFIX.length)) || [];
+    const applauseCaseIds = matches
+        ?.filter(match => match.startsWith(APPLAUSE_CASE_ID_PREFIX))
+        .map(match => match.substring(APPLAUSE_CASE_ID_PREFIX.length)) || [];
+    if (testRailCaseIds.length > 1) {
+        console.warn('Multiple TestRail case ids detected in testCase name');
+    }
+    if (applauseCaseIds.length > 1) {
+        console.warn('Multiple Applause case ids detected in testCase name');
+    }
+    return {
+        applauseTestCaseId: applauseCaseIds[0],
+        testRailTestCaseId: testRailCaseIds[0],
+        testCaseName: testCaseName
+            .replace(/(TestRail-\d+|Applause-\d+)/g, '')
+            .replace(/\s+/g, ' ')
+            .trim(),
+    };
+}
+
 class ApplauseReporter {
     autoApi;
     initializer;
@@ -371,37 +397,6 @@ class RunReporter {
             writeFileSync(join(outputPath, 'providerUrls.txt'), JSON.stringify(jsonArray, null, 1));
         }
     }
-}
-const TEST_RAIL_CASE_ID_PREFIX = 'TestRail-';
-const APPLAUSE_CASE_ID_PREFIX = 'Applause-';
-function parseTestCaseName(testCaseName) {
-    // Split the name on spaces. We will reassemble after parsing out the other ids
-    const tokens = testCaseName.split(' ');
-    let testRailTestCaseId;
-    let applauseTestCaseId;
-    tokens.forEach(token => {
-        if (token?.startsWith(TEST_RAIL_CASE_ID_PREFIX)) {
-            if (testRailTestCaseId !== undefined) {
-                console.warn('Multiple TestRail case ids detected in testCase name');
-            }
-            testRailTestCaseId = token.substring(TEST_RAIL_CASE_ID_PREFIX.length);
-        }
-        else if (token?.startsWith(APPLAUSE_CASE_ID_PREFIX)) {
-            if (applauseTestCaseId !== undefined) {
-                console.warn('Multiple Applause case ids detected in testCase name');
-            }
-            applauseTestCaseId = token.substring(APPLAUSE_CASE_ID_PREFIX.length);
-        }
-    });
-    return {
-        applauseTestCaseId,
-        testRailTestCaseId,
-        testCaseName: tokens
-            .filter(token => token !== `${TEST_RAIL_CASE_ID_PREFIX}${testRailTestCaseId || ''}`)
-            .filter(token => token !== `${APPLAUSE_CASE_ID_PREFIX}${applauseTestCaseId || ''}`)
-            .join(' ')
-            .trim(),
-    };
 }
 
 var TestRunAutoResultStatus;

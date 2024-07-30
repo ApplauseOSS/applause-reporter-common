@@ -183,20 +183,12 @@ declare class RunReporter {
     submitTestCaseResult(id: string, status: TestResultStatus, params?: AdditionalTestCaseResultParams): void;
     runnerEnd(): Promise<void>;
 }
-declare const TEST_RAIL_CASE_ID_PREFIX: string;
-declare const APPLAUSE_CASE_ID_PREFIX: string;
-declare function parseTestCaseName(testCaseName: string): ParsedTestCaseName;
-interface ParsedTestCaseName {
-    testCaseName: string;
-    testRailTestCaseId?: string;
-    applauseTestCaseId?: string;
-}
 
 interface TestRunAutoResultDto {
     testCycleId: number;
     status: TestRunAutoResultStatus;
     failureReason?: string;
-    sessionDetailsJson?: object;
+    sessionDetailsJson?: SessionDetails;
     startTime?: Date;
     endTime?: Date;
 }
@@ -206,6 +198,16 @@ declare enum TestRunAutoResultStatus {
     SKIPPED = "SKIPPED",
     CANCELED = "CANCELED",
     ERROR = "ERROR"
+}
+interface SessionDetails {
+    value: {
+        deviceName?: string;
+        orientation?: string;
+        platformName?: string;
+        platformVersion?: string;
+        browserName?: string;
+        browserVersion?: string;
+    };
 }
 
 interface PublicApiConfig {
@@ -239,4 +241,13 @@ declare function loadConfigFromFile(configFile?: string): Partial<ApplauseConfig
 declare function validateConfig(config: ApplauseConfig): void;
 declare function validatePartialConfig(config: Partial<ApplauseConfig>): void;
 
-export { APPLAUSE_CASE_ID_PREFIX, type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, type Attachment, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, type EmailAddressResponse, type EmailFetchRequest, EmailHelper, Inbox, PublicApi, RunInitializer, RunReporter, type SubmitTestCaseResultDto, TEST_RAIL_CASE_ID_PREFIX, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunAutoResultDto, TestRunAutoResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, parseTestCaseName, validateConfig, validatePartialConfig };
+declare const TEST_RAIL_CASE_ID_PREFIX: string;
+declare const APPLAUSE_CASE_ID_PREFIX: string;
+declare function parseTestCaseName(testCaseName: string): ParsedTestCaseName;
+interface ParsedTestCaseName {
+    testCaseName: string;
+    testRailTestCaseId?: string;
+    applauseTestCaseId?: string;
+}
+
+export { APPLAUSE_CASE_ID_PREFIX, type AdditionalTestCaseParams, type AdditionalTestCaseResultParams, type ApplauseConfig, ApplauseReporter, type Attachment, AutoApi, type ClientConfig, type ConfigLoadProperties, type CreateTestCaseResultDto, type CreateTestCaseResultResponseDto, type EmailAddressResponse, type EmailFetchRequest, EmailHelper, Inbox, type ParsedTestCaseName, PublicApi, RunInitializer, RunReporter, type SessionDetails, type SubmitTestCaseResultDto, TEST_RAIL_CASE_ID_PREFIX, type TestRailOptions, type TestResultProviderInfo, TestResultStatus, type TestRunAutoResultDto, TestRunAutoResultStatus, type TestRunCreateDto, type TestRunCreateResponseDto, TestRunHeartbeatService, isComplete, loadConfig, loadConfigFromFile, overrideConfig, parseTestCaseName, validateConfig, validatePartialConfig };
