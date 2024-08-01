@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import {
   CreateTestCaseResultDto,
   CreateTestCaseResultResponseDto,
@@ -39,15 +39,13 @@ export class AutoApi {
       function (response: AxiosResponse<any, any>) {
         return response;
       },
-      function (error) {
+      function (error: AxiosError) {
         // log and rethrow
         const errText =
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.data !== undefined
-            ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              error.data
-            : // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              `error-code [${error.response.status}] with error [${error.response.statusText}]`;
+          error.response?.data !== undefined
+            ? JSON.stringify(error.response.data)
+            : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;
         console.error(`Auto-Api returned ${errText}`);
         return Promise.reject(error);
       }
