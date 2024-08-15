@@ -17,7 +17,6 @@ type ClientConfig = {
  */
 interface TestRunCreateDto {
     tests: string[];
-    itwTestCycleId?: number;
 }
 /**
  * DTO modeling the response to a test run creation request
