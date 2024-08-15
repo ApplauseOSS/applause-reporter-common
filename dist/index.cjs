@@ -200,6 +200,7 @@ class AutoApi {
                 sdkVersion: `js:${API_VERSION}`,
                 // Copy over the product id
                 productId: this.options.productId,
+                applauseTestCycleId: this.options.applauseTestCycleId,
                 // Copy over test rail parameters
                 testRailReportingEnabled: this.options.testRailOptions !== undefined,
                 addAllTestsToPlan: this.options.testRailOptions?.addAllTestsToPlan,

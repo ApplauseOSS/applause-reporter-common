@@ -12,9 +12,6 @@ export type ClientConfig = {
 export interface TestRunCreateDto {
   // Required: a list of test cases to pre-create
   tests: string[];
-
-  // Optional: an applause test cycle id
-  itwTestCycleId?: number;
 }
 
 /**
