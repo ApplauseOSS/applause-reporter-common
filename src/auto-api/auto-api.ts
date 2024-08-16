@@ -94,7 +94,7 @@ export class AutoApi {
           // Copy over the product id
           productId: this.options.productId,
 
-          applauseTestCycleId: this.options.applauseTestCycleId,
+          itwTestCycleId: this.options.applauseTestCycleId,
 
           // Copy over test rail parameters
           testRailReportingEnabled: this.options.testRailOptions !== undefined,
