@@ -12,9 +12,6 @@ export type ClientConfig = {
 export interface TestRunCreateDto {
   // Required: a list of test cases to pre-create
   tests: string[];
-
-  // Optional: an applause test cycle id
-  itwTestCycleId?: number;
 }
 
 /**
@@ -126,4 +123,26 @@ export interface EmailAddressResponse {
  */
 export interface EmailFetchRequest {
   emailAddress: string;
+}
+
+export enum AssetType {
+  SCREENSHOT = 'SCREENSHOT',
+  FAILURE_SCREENSHOT = 'FAILURE_SCREENSHOT',
+  VIDEO = 'VIDEO',
+  NETWORK_HAR = 'NETWORK_HAR',
+  VITALS_LOG = 'VITALS_LOG',
+  CONSOLE_LOG = 'CONSOLE_LOG',
+  NETWORK_LOG = 'NETWORK_LOG',
+  DEVICE_LOG = 'DEVICE_LOG',
+  SELENIUM_LOG = 'SELENIUM_LOG',
+  SELENIUM_LOG_JSON = 'SELENIUM_LOG_JSON',
+  BROWSER_LOG = 'BROWSER_LOG',
+  FRAMEWORK_LOG = 'FRAMEWORK_LOG',
+  EMAIL = 'EMAIL',
+  PAGE_SOURCE = 'PAGE_SOURCE',
+  CODE_BUNDLE = 'CODE_BUNDLE',
+  RESULTS_ZIP = 'RESULTS_ZIP',
+  SESSION_DETAILS = 'SESSION_DETAILS',
+  DEVICE_DETAILS = 'DEVICE_DETAILS',
+  UNKNOWN = 'UNKNOWN',
 }

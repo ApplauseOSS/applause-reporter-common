@@ -1,13 +1,13 @@
-import { ApplauseReporter, RunInitializer, RunReporter } from '../src/reporter.ts';
+import { ApplauseReporter, RunInitializer, RunReporter } from '../src/auto-api/reporter.ts';
 import {
   CreateTestCaseResultDto,
   CreateTestCaseResultResponseDto,
   TestResultProviderInfo,
   TestResultStatus,
   TestRunCreateDto,
-} from '../src/dto.ts';
-import { TestRunHeartbeatService } from '../src/heartbeat.ts';
-import { AutoApi } from '../src/auto-api.ts';
+} from '../src/auto-api/dto.ts';
+import { TestRunHeartbeatService } from '../src/auto-api/heartbeat.ts';
+import { AutoApi } from '../src/auto-api/auto-api.ts';
 
 const mockedAutoApi = {
   startTestRun:  jest.fn((req: any) => {
@@ -42,13 +42,13 @@ const mockedAutoApi = {
   },
 };
 
-jest.mock('../src/auto-api.ts', () => {
+jest.mock('../src/auto-api/auto-api.ts', () => {
   return {
     AutoApi: jest.fn().mockImplementation(() => mockedAutoApi),
   };
 });
 
-jest.mock('../src/heartbeat.ts', () => {
+jest.mock('../src/auto-api/heartbeat.ts', () => {
   return {
     TestRunHeartbeatService: jest.fn().mockImplementation(() => {
       return {
@@ -70,7 +70,7 @@ describe('reporter test', () => {
     jest.clearAllMocks();
     reporter = new ApplauseReporter({
       apiKey: 'apiKey',
-      baseUrl: 'localhost',
+      autoApiBaseUrl: 'localhost',
       productId: 1,
     });
   });
@@ -109,7 +109,7 @@ describe('reporter test', () => {
   it('should pass the test case name and run id', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -126,7 +126,7 @@ describe('reporter test', () => {
   it('should extract out the testrail id', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -144,7 +144,7 @@ describe('reporter test', () => {
   it('should extract out the applause test case id', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -162,7 +162,7 @@ describe('reporter test', () => {
   it('should allow overwriting of testrail test case id', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -180,7 +180,7 @@ describe('reporter test', () => {
   it('should allow overwriting of applause test case id', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -198,7 +198,7 @@ describe('reporter test', () => {
   it('should not overwrite the test case id if other values are passed', () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const rr = new RunReporter(
@@ -218,7 +218,7 @@ describe('reporter test', () => {
   it('should filter out Test Case IDs when precreating results', async () => {
     const mockedAutoApi = new AutoApi({
       apiKey: '',
-      baseUrl: '',
+      autoApiBaseUrl: '',
       productId: 0,
     });
     const ri = new RunInitializer(

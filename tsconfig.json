@@ -27,6 +27,7 @@
     "noUnusedParameters": true,
     "emitDeclarationOnly": true,
     "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
     "pretty": true
   },
   "include": [

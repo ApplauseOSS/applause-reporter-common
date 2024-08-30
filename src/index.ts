@@ -1,7 +1,4 @@
-// Re-export DTOs
-export * from './auto-api.ts';
-export * from './config.ts';
-export * from './dto.ts';
-export * from './email-helper.ts';
-export * from './heartbeat.ts';
-export * from './reporter.ts';
+export * from './auto-api/index.ts';
+export * from './public-api/index.ts';
+export * from './config/config.ts';
+export * from './shared/index.ts';
