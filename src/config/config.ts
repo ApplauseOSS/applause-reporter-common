@@ -82,7 +82,7 @@ export function overrideConfig(
     {},
     config,
     Object.fromEntries(
-      Object.entries(overrides ?? {}).filter(([_, v]) => v !== undefined)
+      Object.entries(overrides ?? {}).filter(params => params[1] !== undefined)
     )
   );
 }

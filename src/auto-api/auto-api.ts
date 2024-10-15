@@ -56,13 +56,13 @@ export class AutoApi {
     });
 
     this.client.interceptors.response.use(
-      function (response: AxiosResponse<any, any>) {
+      function (response: AxiosResponse<unknown, unknown>) {
         return response;
       },
       (error: AxiosError) => {
         // log and rethrow
         const errText =
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+           
           error.response?.data !== undefined
             ? JSON.stringify(error.response.data)
             : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;

@@ -176,9 +176,7 @@ class AutoApi {
             return response;
         }, (error) => {
             // log and rethrow
-            const errText = 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            error.response?.data !== undefined
+            const errText = error.response?.data !== undefined
                 ? JSON.stringify(error.response.data)
                 : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;
             this.logger.error(`Auto-Api returned ${errText}`);
@@ -712,7 +710,7 @@ class RunReporter {
             itwTestCaseId: parsedTestCase.applauseTestCaseId,
             testRunId: this.testRunId,
             // If the additional params provides either test case id, it will override the parsed value we set above
-            ...Object.fromEntries(Object.entries(params || {}).filter(([_, v]) => v !== undefined)),
+            ...Object.fromEntries(Object.entries(params || {}).filter(params => params[1] !== undefined)),
         })
             .then(res => {
             return res.data.testResultId;
@@ -846,9 +844,7 @@ class PublicApi {
             return response;
         }, (error) => {
             // log and rethrow
-            const errText = 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            error.response?.data !== undefined
+            const errText = error.response?.data !== undefined
                 ? JSON.stringify(error.response.data)
                 : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;
             this.logger.error(`Public-Api returned ${errText}`);
@@ -908,7 +904,7 @@ function loadConfig(loadOptions) {
  * @returns The overridden configuration.
  */
 function overrideConfig(config, overrides) {
-    return Object.assign({}, config, Object.fromEntries(Object.entries(overrides ?? {}).filter(([_, v]) => v !== undefined)));
+    return Object.assign({}, config, Object.fromEntries(Object.entries(overrides ?? {}).filter(params => params[1] !== undefined)));
 }
 /**
  * Checks if the configuration is complete.
