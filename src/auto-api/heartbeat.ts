@@ -1,4 +1,4 @@
-import winston = require('winston');
+import winston from 'winston';
 import { AutoApi } from './auto-api.ts';
 import { constructDefaultLogger } from '../shared/logging.ts';
 

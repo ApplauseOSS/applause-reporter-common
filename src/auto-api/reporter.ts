@@ -276,7 +276,7 @@ export class RunReporter {
         testRunId: this.testRunId,
         // If the additional params provides either test case id, it will override the parsed value we set above
         ...Object.fromEntries(
-          Object.entries(params || {}).filter(([_, v]) => v !== undefined)
+          Object.entries(params || {}).filter(params => params[1] !== undefined)
         ),
       })
       .then(res => {
