@@ -126,6 +126,7 @@ interface AutoApiConfig {
     readonly productId: number;
     readonly testRailOptions?: TestRailOptions;
     readonly applauseTestCycleId?: number;
+    readonly timeout?: number;
 }
 
 /**

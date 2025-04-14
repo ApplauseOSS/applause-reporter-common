@@ -8,6 +8,7 @@ export interface AutoApiConfig {
   readonly productId: number;
   readonly testRailOptions?: TestRailOptions;
   readonly applauseTestCycleId?: number;
+  readonly timeout?: number;
 }
 
 export const DEFAULT_URL = 'https://prod-auto-api.cloud.applause.com/';

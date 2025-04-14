@@ -47,7 +47,7 @@ export class AutoApi {
     validateAutoApiConfig(options);
     this.client = axios.create({
       baseURL: options.autoApiBaseUrl,
-      timeout: 10000,
+      timeout: options.timeout ?? 300_000,
       headers: {
         'X-Api-Key': options.apiKey,
         'Context-Type': 'application/json',
