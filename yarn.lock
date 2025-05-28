@@ -333,6 +333,13 @@
     debug "^4.3.1"
     minimatch "^3.1.2"
 
+"@eslint/core@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@eslint/core/-/core-0.13.0.tgz#bf02f209846d3bf996f9e8009db62df2739b458c"
+  integrity sha512-yfkgDw1KR66rkT5A8ci4irzDysN7FRpq3ttJolR88OqQikAWqwA8j5VZyas+vjyBNFIJ7MfybJ9plMILI2UrCw==
+  dependencies:
+    "@types/json-schema" "^7.0.15"
+
 "@eslint/core@^0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@eslint/core/-/core-0.6.0.tgz#9930b5ba24c406d67a1760e94cdbac616a6eb674"
@@ -364,10 +371,11 @@
   integrity sha512-BsWiH1yFGjXXS2yvrf5LyuoSIIbPrGUWob917o+BTKuZ7qJdxX8aJLRxs1fS9n6r7vESrq1OUqb68dANcFXuQQ==
 
 "@eslint/plugin-kit@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@eslint/plugin-kit/-/plugin-kit-0.2.0.tgz#8712dccae365d24e9eeecb7b346f85e750ba343d"
-  integrity sha512-vH9PiIMMwvhCx31Af3HiGzsVNULDbyVkHXwlemn/B0TFj/00ho3y55efXrUZTfQipxoHC5u4xq6zblww1zm1Ig==
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/@eslint/plugin-kit/-/plugin-kit-0.2.8.tgz#47488d8f8171b5d4613e833313f3ce708e3525f8"
+  integrity sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==
   dependencies:
+    "@eslint/core" "^0.13.0"
     levn "^0.4.1"
 
 "@humanfs/core@^0.19.0":
