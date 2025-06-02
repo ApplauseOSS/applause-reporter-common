@@ -84,7 +84,7 @@ describe('Winston Logger Using Applause Transport', () => {
     beforeEach(() => {
         logger = winston.createLogger({
             level: 'info',
-            format: winston.format.printf((info) => info.message),
+            format: winston.format.printf((info) => info.message as string),
             transports: [
                 new ApplauseTransport(),
             ],
