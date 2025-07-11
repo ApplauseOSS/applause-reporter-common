@@ -839,6 +839,20 @@ class PublicApi {
             this.callsInFlight -= 1;
         }
     }
+    async getBuilds(productId) {
+        const params = {
+            productId: productId,
+            size: 100,
+            sort: 'desc',
+        };
+        try {
+            this.callsInFlight += 1;
+            return await this.client.get(`v2/builds`, { params });
+        }
+        finally {
+            this.callsInFlight -= 1;
+        }
+    }
 }
 
 /**

@@ -467,6 +467,7 @@ declare class PublicApi {
     get getCallsInFlight(): number;
     constructor(options: PublicApiConfig, logger?: winston.Logger);
     submitResult(testCaseId: number, info: TestRunAutoResultDto): Promise<AxiosResponse<void>>;
+    getBuilds(productId: number): Promise<AxiosResponse>;
 }
 
 type ApplauseConfig = AutoApiConfig & PublicApiConfig;
