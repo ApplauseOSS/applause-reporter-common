@@ -121,7 +121,7 @@ describe('getBuilds', () => {
       params: {
         productId: 123,
         size: 100,
-        sort: 'desc',
+        sort: 'lastChangeDate,desc',
       },
     });
     expect(result).toEqual(mockResponse);

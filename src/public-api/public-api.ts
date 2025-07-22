@@ -70,7 +70,7 @@ export class PublicApi {
     const params = {
       productId: productId,
       size: 100,
-      sort: 'desc',
+      sort: 'lastChangeDate,desc',
     };
     try {
       this.callsInFlight += 1;
