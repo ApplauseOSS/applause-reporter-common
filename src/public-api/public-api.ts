@@ -42,7 +42,6 @@ export class PublicApi {
       (error: AxiosError) => {
         // log and rethrow
         const errText =
-           
           error.response?.data !== undefined
             ? JSON.stringify(error.response.data)
             : `error-code [${error.response?.status}] with error [${error.response?.statusText}]`;
@@ -62,6 +61,20 @@ export class PublicApi {
         `v2/test-case-results/${testCaseId}/submit`,
         info
       );
+    } finally {
+      this.callsInFlight -= 1;
+    }
+  }
+
+  async getBuilds(productId: number): Promise<AxiosResponse> {
+    const params = {
+      productId: productId,
+      size: 100,
+      sort: 'lastChangeDate,desc',
+    };
+    try {
+      this.callsInFlight += 1;
+      return await this.client.get<void>(`v2/builds`, { params });
     } finally {
       this.callsInFlight -= 1;
     }
